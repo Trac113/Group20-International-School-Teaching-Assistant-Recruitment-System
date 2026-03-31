@@ -1,0 +1,1 @@
+[{"id":"f6c618e1-7bc6-4e22-afee-986e01d78216","jobId":"job-123","applicantUsername":"student1","status":"ACCEPTED","resumePath":"resume.pdf","appliedAt":"2026-03-18T16:47:34.064468700","matchScore":0,"aiAnalysis":""}]
