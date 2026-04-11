@@ -53,4 +53,16 @@ public class AdminService {
         }
         return counts;
     }
+
+    public Map<String, Integer> getTAWorkloadStats() {
+        List<com.qq.recruitment.model.UserProfile> profiles = dao.getAllProfiles();
+        Map<String, Integer> workloadStats = new HashMap<>();
+
+        for (com.qq.recruitment.model.UserProfile profile : profiles) {
+            if (profile.getWorkload() > 0) {
+                workloadStats.put(profile.getUsername(), profile.getWorkload());
+            }
+        }
+        return workloadStats;
+    }
 }

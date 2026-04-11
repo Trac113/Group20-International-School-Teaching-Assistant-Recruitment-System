@@ -10,31 +10,42 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 
+import com.qq.recruitment.util.SessionManager;
+import com.qq.recruitment.model.User;
+
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import java.io.File;
+
 public class ApplicantController {
 
     @FXML
     private TableView<Job> jobTable;
     @FXML
+    private TextField searchField;
+    @FXML
     private TableColumn<Job, String> titleColumn;
     @FXML
-    private TableColumn<Job, String> descriptionColumn;
+    private TableColumn<Job, String> categoryColumn;
     @FXML
-    private TableColumn<Job, String> requirementsColumn;
+    private TableColumn<Job, String> skillsColumn;
+    @FXML
+    private TableColumn<Job, String> descriptionColumn;
     @FXML
     private TableColumn<Job, Void> actionColumn;
 
     private final JobService jobService = new JobService();
     private final ApplicationService applicationService = new ApplicationService();
-    
-    // In a real app, this would be injected from session
-    private String currentUser = "student1"; 
 
     @FXML
     public void initialize() {
         // Setup columns
         titleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTitle()));
+        categoryColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
+        skillsColumn.setCellValueFactory(data -> new SimpleStringProperty(
+                data.getValue().getRequiredSkills() != null ? String.join(", ", data.getValue().getRequiredSkills()) : ""
+        ));
         descriptionColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDescription()));
-        requirementsColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRequirements()));
 
         // Add "Apply" button to each row
         actionColumn.setCellFactory(param -> new TableCell<>() {
@@ -66,21 +77,47 @@ public class ApplicantController {
         jobTable.setItems(jobs);
     }
 
+    @FXML
+    private void handleSearch() {
+        String keyword = searchField.getText();
+        ObservableList<Job> jobs = FXCollections.observableArrayList(jobService.searchOpenJobs(keyword));
+        jobTable.setItems(jobs);
+    }
+
     private void handleApply(Job job) {
-        // Basic interaction: Confirm and Apply
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Apply for " + job.getTitle() + "?", ButtonType.YES, ButtonType.NO);
+        ButtonType yesButton = new ButtonType("Yes", ButtonBar.ButtonData.YES);
+        ButtonType noButton = new ButtonType("No", ButtonBar.ButtonData.NO);
+        Alert alert = new Alert(
+                Alert.AlertType.CONFIRMATION,
+                "Apply for " + job.getTitle() + "?\nYou will need to select your resume (PDF/DOCX).",
+                yesButton,
+                noButton
+        );
         alert.showAndWait();
 
-        if (alert.getResult() == ButtonType.YES) {
-            // For Sprint 1/2, resume path is dummy or file picker can be added later
-            String dummyResumePath = "path/to/resume.pdf"; 
+        if (alert.getResult() == yesButton) {
+            User currentUser = SessionManager.getInstance().getCurrentUser();
+            if (currentUser == null) return;
+
+            // Open FileChooser
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select Resume");
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Document Files", "*.pdf", "*.docx", "*.doc")
+            );
             
-            boolean success = applicationService.apply(job.getId(), currentUser, dummyResumePath);
-            
-            if (success) {
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Application submitted!");
+            Stage stage = (Stage) jobTable.getScene().getWindow();
+            File selectedFile = fileChooser.showOpenDialog(stage);
+
+            if (selectedFile != null) {
+                boolean success = applicationService.apply(job.getId(), currentUser.getUsername(), selectedFile);
+                if (success) {
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Application submitted successfully!");
+                } else {
+                    showAlert(Alert.AlertType.WARNING, "Warning", "You have already applied for this job.");
+                }
             } else {
-                showAlert(Alert.AlertType.WARNING, "Warning", "You have already applied for this job.");
+                showAlert(Alert.AlertType.INFORMATION, "Cancelled", "Application cancelled. Resume is required.");
             }
         }
     }

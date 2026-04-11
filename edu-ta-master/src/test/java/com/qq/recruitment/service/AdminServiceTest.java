@@ -16,11 +16,13 @@ public class AdminServiceTest {
         if (appFile.exists()) appFile.delete();
         File jobFile = new File("src/main/resources/data/jobs.json");
         if (jobFile.exists()) jobFile.delete();
+        File profileFile = new File("src/main/resources/data/profiles.json");
+        if (profileFile.exists()) profileFile.delete();
 
         // Setup Data
         JobService jobService = new JobService();
-        jobService.createJob("Java TA", "Desc", "Req", "Prof. A");
-        jobService.createJob("Python TA", "Desc", "Req", "Prof. B");
+        jobService.createJob("Java TA", "Teaching", "Desc", "Req", null, "Prof. A");
+        jobService.createJob("Python TA", "Teaching", "Desc", "Req", null, "Prof. B");
         String javaJobId = jobService.getAllJobs().get(0).getId();
         String pythonJobId = jobService.getAllJobs().get(1).getId();
 
@@ -28,6 +30,11 @@ public class AdminServiceTest {
         appService.apply(javaJobId, "student1", "resume.pdf");
         appService.apply(javaJobId, "student2", "resume.pdf");
         appService.apply(pythonJobId, "student3", "resume.pdf");
+
+        // Create profile for student1
+        ProfileService profileService = new ProfileService();
+        com.qq.recruitment.model.UserProfile profile = new com.qq.recruitment.model.UserProfile("student1", "CS", "123", null, "bio");
+        profileService.updateProfile(profile);
 
         // Update status
         String app1Id = appService.getApplicationsByApplicant("student1").get(0).getId();
@@ -45,5 +52,10 @@ public class AdminServiceTest {
         Map<String, Integer> jobStats = adminService.getJobApplicationCounts();
         assertEquals(2, jobStats.get("Java TA"));
         assertEquals(1, jobStats.get("Python TA"));
+
+        // 3. Workload Stats
+        Map<String, Integer> workloadStats = adminService.getTAWorkloadStats();
+        // Since "student1" was ACCEPTED for Java TA, their workload should be 1
+        assertEquals(1, workloadStats.get("student1"));
     }
 }

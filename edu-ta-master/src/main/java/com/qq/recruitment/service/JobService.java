@@ -13,8 +13,8 @@ public class JobService {
         this.jobDAO = new JsonFileDAO();
     }
 
-    public void createJob(String title, String description, String requirements, String postedBy) {
-        Job job = new Job(title, description, requirements, postedBy);
+    public void createJob(String title, String category, String description, String requirements, List<String> requiredSkills, String postedBy) {
+        Job job = new Job(title, category, description, requirements, requiredSkills, postedBy);
         jobDAO.addJob(job);
     }
 
@@ -26,5 +26,27 @@ public class JobService {
          return jobDAO.getAllJobs().stream()
                  .filter(job -> "OPEN".equals(job.getStatus()))
                  .collect(Collectors.toList());
+    }
+
+    public void updateJobStatus(String jobId, String status) {
+        List<Job> allJobs = jobDAO.getAllJobs();
+        for (Job job : allJobs) {
+            if (job.getId().equals(jobId)) {
+                job.setStatus(status);
+                jobDAO.saveJobs();
+                break;
+            }
+        }
+    }
+
+    public List<Job> searchOpenJobs(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getOpenJobs();
+        }
+        String lowerKeyword = keyword.toLowerCase();
+        return getOpenJobs().stream()
+                .filter(job -> (job.getTitle() != null && job.getTitle().toLowerCase().contains(lowerKeyword)) ||
+                               (job.getPostedBy() != null && job.getPostedBy().toLowerCase().contains(lowerKeyword)))
+                .collect(Collectors.toList());
     }
 }

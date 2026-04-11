@@ -1,0 +1,26 @@
+﻿[
+  {
+    "username": "student_xiaochen",
+    "major": "Computer Science",
+    "studentId": "2024001",
+    "skills": ["Java", "Data Structures", "Teaching"],
+    "bio": "Experienced in tutoring and lab support for programming courses.",
+    "workload": 1
+  },
+  {
+    "username": "student_xiaolin",
+    "major": "Software Engineering",
+    "studentId": "2024002",
+    "skills": ["Python", "Machine Learning", "Presentation"],
+    "bio": "Interested in applied machine learning and student project mentoring.",
+    "workload": 0
+  },
+  {
+    "username": "testuser",
+    "major": "Information Systems",
+    "studentId": "2024999",
+    "skills": ["Office", "Communication"],
+    "bio": "Demo account for system walkthrough.",
+    "workload": 0
+  }
+]

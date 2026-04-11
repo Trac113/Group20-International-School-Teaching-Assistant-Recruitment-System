@@ -18,12 +18,16 @@ public class AdminController {
     @FXML
     private BarChart<String, Number> jobBarChart;
 
+    @FXML
+    private BarChart<String, Number> workloadBarChart;
+
     private final AdminService adminService = new AdminService();
 
     @FXML
     public void initialize() {
         loadStatusStats();
         loadJobStats();
+        loadWorkloadStats();
     }
 
     private void loadStatusStats() {
@@ -49,5 +53,18 @@ public class AdminController {
 
         jobBarChart.getData().add(series);
         jobBarChart.setTitle("Applications per Job");
+    }
+
+    private void loadWorkloadStats() {
+        Map<String, Integer> stats = adminService.getTAWorkloadStats();
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Workload");
+
+        for (Map.Entry<String, Integer> entry : stats.entrySet()) {
+            series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
+        }
+
+        workloadBarChart.getData().add(series);
+        workloadBarChart.setTitle("TA Workload Distribution");
     }
 }

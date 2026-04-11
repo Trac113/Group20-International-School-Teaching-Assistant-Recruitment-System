@@ -3,6 +3,8 @@ package com.qq.recruitment.controller;
 import com.qq.recruitment.App;
 import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.UserService;
+import com.qq.recruitment.util.SessionManager;
+import com.qq.recruitment.util.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
@@ -28,16 +30,14 @@ public class LoginController {
         User user = userService.login(username, password);
 
         if (user != null) {
+            SessionManager.getInstance().login(user);
             showAlert(Alert.AlertType.INFORMATION, "Login Successful", "Welcome, " + user.getFullName() + "!");
             try {
-                if ("ADMIN".equals(user.getRole())) {
-                    App.setRoot("admin_dashboard");
-                } else {
-                    App.setRoot("job_list");
-                }
+                // Navigate to main layout after successful login
+                App.setRoot("main");
             } catch (IOException e) {
                 e.printStackTrace();
-                showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to navigate to dashboard.");
+                showAlert(Alert.AlertType.ERROR, "Navigation Error", "Failed to navigate to main dashboard.");
             }
         } else {
             showAlert(Alert.AlertType.ERROR, "Login Failed", "Invalid username or password.");

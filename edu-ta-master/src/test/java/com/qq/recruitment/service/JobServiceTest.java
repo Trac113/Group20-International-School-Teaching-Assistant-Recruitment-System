@@ -19,7 +19,7 @@ public class JobServiceTest {
         JobService jobService = new JobService();
 
         // Test Create Job
-        jobService.createJob("Java TA", "Assist with Java course", "Knowledge of Java", "Prof. Smith");
+        jobService.createJob("Java TA", "Teaching", "Assist with Java course", "Knowledge of Java", null, "Prof. Smith");
         
         // Test Retrieve Jobs
         List<Job> jobs = jobService.getAllJobs();
