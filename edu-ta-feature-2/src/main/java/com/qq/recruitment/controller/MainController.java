@@ -22,12 +22,14 @@ public class MainController {
 
     @FXML
     private VBox contentArea;
+    @FXML
+    private Button logoutButton;
 
     @FXML
     public void initialize() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         if (currentUser != null) {
-            userLabel.setText("Welcome, " + currentUser.getFullName());
+            userLabel.setText("Welcome, " + currentUser.getUsername());
             buildSidebar(currentUser.getRole());
         }
     }
@@ -38,16 +40,15 @@ public class MainController {
         if ("APPLICANT".equals(role)) {
             addNavButton("My Profile", "profile");
             addNavButton("Available Jobs", "job_list");
-            // addNavButton("My Applications", "my_applications"); // Future
+            addNavButton("My Favorites", "my_favorites");
+            addNavButton("My Applications", "my_applications");
         } else if ("TEACHER".equals(role)) {
             addNavButton("Post a Job", "job_post");
             addNavButton("Manage My Jobs", "my_jobs");
             addNavButton("Screening", "screening_list");
         } else if ("ADMIN".equals(role)) {
             addNavButton("Dashboard", "admin_dashboard");
-            addNavButton("Post a Job", "job_post");
-            addNavButton("Manage My Jobs", "my_jobs");
-            addNavButton("Screening", "screening_list");
+            addNavButton("Manage Accounts", "admin_management");
         }
     }
 

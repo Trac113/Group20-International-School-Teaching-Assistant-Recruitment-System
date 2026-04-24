@@ -10,18 +10,26 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class MyJobsController {
 
     @FXML
     private TableView<Job> jobTable;
+    @FXML
+    private TableColumn<Job, String> jobIdColumn;
     @FXML
     private TableColumn<Job, String> titleColumn;
     @FXML
@@ -35,19 +43,26 @@ public class MyJobsController {
 
     @FXML
     public void initialize() {
+        jobIdColumn.setCellValueFactory(data -> new SimpleStringProperty(JobService.toDisplayJobId(data.getValue().getId())));
         titleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTitle()));
         categoryColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
         statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
 
         actionColumn.setCellFactory(param -> new TableCell<>() {
             private final Button toggleBtn = new Button();
+            private final Button editBtn = new Button("Edit");
 
             {
                 toggleBtn.setOnAction(event -> {
                     Job job = getTableView().getItems().get(getIndex());
                     String newStatus = "OPEN".equals(job.getStatus()) ? "CLOSED" : "OPEN";
                     jobService.updateJobStatus(job.getId(), newStatus);
-                    loadMyJobs(); // refresh
+                    loadMyJobs();
+                });
+
+                editBtn.setOnAction(event -> {
+                    Job job = getTableView().getItems().get(getIndex());
+                    handleEditJob(job);
                 });
             }
 
@@ -65,12 +80,56 @@ public class MyJobsController {
                         toggleBtn.setText("Open");
                         toggleBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
                     }
-                    setGraphic(toggleBtn);
+                    HBox pane = new HBox(6, editBtn, toggleBtn);
+                    setGraphic(pane);
                 }
             }
         });
 
         loadMyJobs();
+    }
+
+    private void handleEditJob(Job job) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Job Detail");
+        dialog.setHeaderText("Edit job: " + job.getTitle());
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        TextArea descArea = new TextArea(job.getDescription());
+        descArea.setPrefRowCount(5);
+        TextArea reqArea = new TextArea(job.getRequirements());
+        reqArea.setPrefRowCount(5);
+
+        grid.add(new Label("Description:"), 0, 0);
+        grid.add(descArea, 1, 0);
+        grid.add(new Label("Requirements:"), 0, 1);
+        grid.add(reqArea, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) {
+            return;
+        }
+
+        String newDesc = descArea.getText().trim();
+        String newReq = reqArea.getText().trim();
+
+        if (newDesc.isBlank() || newReq.isBlank()) {
+            showAlert(Alert.AlertType.WARNING, "Warning", "Description and requirements cannot be empty.");
+            return;
+        }
+
+        if (jobService.updateJobDetails(job.getId(), newDesc, newReq)) {
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Job details updated.");
+            loadMyJobs();
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to update job details.");
+        }
     }
 
     private void loadMyJobs() {
@@ -83,5 +142,13 @@ public class MyJobsController {
 
         ObservableList<Job> jobs = FXCollections.observableArrayList(myJobs);
         jobTable.setItems(jobs);
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }

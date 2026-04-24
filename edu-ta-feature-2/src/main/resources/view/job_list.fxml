@@ -19,18 +19,15 @@
         </font>
     </Label>
 
-    <HBox spacing="10" alignment="CENTER_LEFT">
-        <TextField fx:id="searchField" promptText="Search by title or poster..." HBox.hgrow="ALWAYS"/>
-        <Button text="Search" onAction="#handleSearch"/>
-    </HBox>
-
     <TableView fx:id="jobTable" VBox.vgrow="ALWAYS">
         <columns>
+            <TableColumn fx:id="jobIdColumn" text="Job ID" prefWidth="90"/>
             <TableColumn fx:id="titleColumn" text="Title" prefWidth="120"/>
-            <TableColumn fx:id="categoryColumn" text="Category" prefWidth="100"/>
-            <TableColumn fx:id="skillsColumn" text="Required Skills" prefWidth="150"/>
-            <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="200"/>
-            <TableColumn fx:id="actionColumn" text="Action" prefWidth="100"/>
+            <TableColumn fx:id="categoryColumn" text="Category / Capacity" prefWidth="150"/>
+            <TableColumn fx:id="skillsColumn" text="Required Skills" prefWidth="130"/>
+            <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="170"/>
+            <TableColumn fx:id="favoriteColumn" text="Favorite" prefWidth="80"/>
+            <TableColumn fx:id="actionColumn" text="Action" prefWidth="90"/>
         </columns>
     </TableView>
 

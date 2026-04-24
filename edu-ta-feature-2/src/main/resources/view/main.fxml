@@ -21,7 +21,7 @@
             </Label>
             <HBox HBox.hgrow="ALWAYS" />
             <Label fx:id="userLabel" text="Welcome, User" textFill="WHITE" />
-            <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #f44336; -fx-text-fill: white;" text="Logout" />
+            <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #f44336; -fx-text-fill: white;" text="Logout" />
         </HBox>
     </top>
     <left>

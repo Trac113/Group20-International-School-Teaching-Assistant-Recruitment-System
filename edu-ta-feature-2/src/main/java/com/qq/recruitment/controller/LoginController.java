@@ -4,11 +4,13 @@ import com.qq.recruitment.App;
 import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.UserService;
 import com.qq.recruitment.util.SessionManager;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
+
 import java.io.IOException;
 
 public class LoginController {
@@ -18,19 +20,37 @@ public class LoginController {
 
     @FXML
     private PasswordField passwordField;
+    @FXML
+    private ComboBox<String> roleComboBox;
 
     private final UserService userService = new UserService();
 
     @FXML
+    public void initialize() {
+        roleComboBox.setItems(FXCollections.observableArrayList("APPLICANT", "TEACHER", "ADMIN"));
+        roleComboBox.setValue("APPLICANT");
+    }
+
+    @FXML
     public void handleLogin() {
-        String username = usernameField.getText();
-        String password = passwordField.getText();
+        String username = usernameField.getText() == null ? "" : usernameField.getText().trim();
+        String password = passwordField.getText() == null ? "" : passwordField.getText().trim();
+        String role = roleComboBox.getValue();
+
+        if (username.isBlank() || password.isBlank()) {
+            showAlert(Alert.AlertType.ERROR, "Login Failed", "Username and password cannot be blank.");
+            return;
+        }
 
         User user = userService.login(username, password);
 
         if (user != null) {
+            if (role != null && !role.equals(user.getRole())) {
+                showAlert(Alert.AlertType.ERROR, "Login Failed", "Role mismatch for this account.");
+                return;
+            }
             SessionManager.getInstance().login(user);
-            showAlert(Alert.AlertType.INFORMATION, "Login Successful", "Welcome, " + user.getFullName() + "!");
+            showAlert(Alert.AlertType.INFORMATION, "Login Successful", "Welcome, " + user.getUsername() + "!");
             try {
                 // Navigate to main layout after successful login
                 App.setRoot("main");
@@ -45,20 +65,31 @@ public class LoginController {
 
     @FXML
     public void handleRegister() {
-         // simple register for demo
-        String username = usernameField.getText();
-        String password = passwordField.getText();
-        
-        if(username.isEmpty() || password.isEmpty()){
-             showAlert(Alert.AlertType.ERROR, "Register Failed", "Username and password cannot be empty.");
-             return;
+        String rawUsername = usernameField.getText() == null ? "" : usernameField.getText();
+        String rawPassword = passwordField.getText() == null ? "" : passwordField.getText();
+        String username = rawUsername.trim();
+        String password = rawPassword.trim();
+        String fullName = username;
+        String role = roleComboBox.getValue();
+
+        if (username.isBlank() || password.isBlank() || role == null || role.isBlank()) {
+            showAlert(Alert.AlertType.ERROR, "Register Failed", "Username, password and role are required.");
+            return;
+        }
+        if (containsWhitespace(rawUsername) || containsWhitespace(rawPassword)) {
+            showAlert(Alert.AlertType.ERROR, "Register Failed", "Username and password cannot contain spaces.");
+            return;
+        }
+        if (!isAsciiOnly(rawUsername) || !isAsciiOnly(rawPassword)) {
+            showAlert(Alert.AlertType.ERROR, "Register Failed", "Username and password must be ASCII characters only.");
+            return;
         }
 
-        boolean success = userService.register(username, password, "New User", "APPLICANT");
+        boolean success = userService.register(username, password, fullName, role);
         if (success) {
-            showAlert(Alert.AlertType.INFORMATION, "Registration Successful", "User registered successfully. Please login.");
+            showAlert(Alert.AlertType.INFORMATION, "Registration Successful", "User registered successfully as " + role + ". Please login.");
         } else {
-            showAlert(Alert.AlertType.ERROR, "Registration Failed", "Username already exists.");
+            showAlert(Alert.AlertType.ERROR, "Registration Failed", "Username already exists or input format is invalid.");
         }
     }
 
@@ -68,5 +99,13 @@ public class LoginController {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    private boolean containsWhitespace(String value) {
+        return value != null && value.chars().anyMatch(Character::isWhitespace);
+    }
+
+    private boolean isAsciiOnly(String value) {
+        return value != null && value.chars().allMatch(ch -> ch <= 127);
     }
 }
