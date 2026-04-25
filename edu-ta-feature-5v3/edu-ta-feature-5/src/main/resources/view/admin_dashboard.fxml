@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="20" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.qq.recruitment.controller.AdminController">
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20"/>
+    </padding>
+
+    <Label text="Admin Dashboard">
+        <font>
+            <Font name="Tahoma" size="24"/>
+        </font>
+    </Label>
+
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Application Status Distribution">
+                <font>
+                    <Font size="16"/>
+                </font>
+            </Label>
+            <TableView fx:id="statusTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="statusNameColumn" text="Status" prefWidth="180"/>
+                    <TableColumn fx:id="statusCountColumn" text="Count" prefWidth="100"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Applications per Job">
+                <font>
+                    <Font size="16"/>
+                </font>
+            </Label>
+            <TableView fx:id="jobTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="jobNameColumn" text="Job (ID | Title)" prefWidth="220"/>
+                    <TableColumn fx:id="jobCountColumn" text="Applications" prefWidth="110"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="TA Workload Distribution">
+                <font>
+                    <Font size="16"/>
+                </font>
+            </Label>
+            <TableView fx:id="workloadTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="workloadNameColumn" text="Applicant" prefWidth="120"/>
+                    <TableColumn fx:id="workloadCountColumn" text="Accepted Jobs" prefWidth="110"/>
+                    <TableColumn fx:id="workloadJobsColumn" text="Accepted Job(s)" prefWidth="260"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Accepted per Job">
+                <font>
+                    <Font size="16"/>
+                </font>
+            </Label>
+            <TableView fx:id="hiredTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="hiredNameColumn" text="Job (ID | Title)" prefWidth="240"/>
+                    <TableColumn fx:id="hiredCountColumn" text="Accepted" prefWidth="100"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </HBox>
+
+</VBox>
