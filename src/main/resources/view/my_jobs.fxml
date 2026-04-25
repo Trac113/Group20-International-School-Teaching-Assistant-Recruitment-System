@@ -22,7 +22,8 @@
 
     <TableView fx:id="jobTable" VBox.vgrow="ALWAYS">
         <columns>
-            <TableColumn fx:id="titleColumn" text="Title" prefWidth="150"/>
+            <TableColumn fx:id="jobIdColumn" text="Job ID" prefWidth="100"/>
+            <TableColumn fx:id="titleColumn" text="Title" prefWidth="140"/>
             <TableColumn fx:id="categoryColumn" text="Category" prefWidth="100"/>
             <TableColumn fx:id="statusColumn" text="Status" prefWidth="100"/>
             <TableColumn fx:id="actionColumn" text="Action" prefWidth="150"/>

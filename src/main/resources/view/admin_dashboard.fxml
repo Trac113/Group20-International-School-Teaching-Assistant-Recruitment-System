@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.chart.BarChart?>
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -29,7 +27,12 @@
                     <Font size="16"/>
                 </font>
             </Label>
-            <PieChart fx:id="statusPieChart" />
+            <TableView fx:id="statusTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="statusNameColumn" text="Status" prefWidth="180"/>
+                    <TableColumn fx:id="statusCountColumn" text="Count" prefWidth="100"/>
+                </columns>
+            </TableView>
         </VBox>
 
         <VBox spacing="10" HBox.hgrow="ALWAYS">
@@ -38,14 +41,41 @@
                     <Font size="16"/>
                 </font>
             </Label>
-            <BarChart fx:id="jobBarChart">
-                <xAxis>
-                    <CategoryAxis label="Job Title" />
-                </xAxis>
-                <yAxis>
-                    <NumberAxis label="Count" />
-                </yAxis>
-            </BarChart>
+            <TableView fx:id="jobTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="jobNameColumn" text="Job (ID | Title)" prefWidth="220"/>
+                    <TableColumn fx:id="jobCountColumn" text="Applications" prefWidth="110"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="TA Workload Distribution">
+                <font>
+                    <Font size="16"/>
+                </font>
+            </Label>
+            <TableView fx:id="workloadTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="workloadNameColumn" text="Applicant" prefWidth="120"/>
+                    <TableColumn fx:id="workloadCountColumn" text="Accepted Jobs" prefWidth="110"/>
+                    <TableColumn fx:id="workloadJobsColumn" text="Accepted Job(s)" prefWidth="260"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Accepted per Job">
+                <font>
+                    <Font size="16"/>
+                </font>
+            </Label>
+            <TableView fx:id="hiredTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="hiredNameColumn" text="Job (ID | Title)" prefWidth="240"/>
+                    <TableColumn fx:id="hiredCountColumn" text="Accepted" prefWidth="100"/>
+                </columns>
+            </TableView>
         </VBox>
     </HBox>
 

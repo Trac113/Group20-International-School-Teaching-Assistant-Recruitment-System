@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class Job {
+    public static final int DEFAULT_MAX_APPLICANTS = 10;
+    public static final int MAX_ALLOWED_APPLICANTS = 30;
+
     private String id;
     private String title;
     private String category; // e.g., "Teaching", "Event"
@@ -13,11 +16,13 @@ public class Job {
     private List<String> requiredSkills;
     private String status; // "OPEN", "CLOSED"
     private String postedBy; // Username of the teacher/admin
+    private int maxApplicants; // Capacity limit for applications
 
     public Job() {
         this.id = UUID.randomUUID().toString();
         this.status = "OPEN";
         this.requiredSkills = new ArrayList<>();
+        this.maxApplicants = DEFAULT_MAX_APPLICANTS;
     }
 
     public Job(String title, String category, String description, String requirements, List<String> requiredSkills, String postedBy) {
@@ -28,6 +33,11 @@ public class Job {
         this.requirements = requirements;
         this.requiredSkills = requiredSkills != null ? requiredSkills : new ArrayList<>();
         this.postedBy = postedBy;
+    }
+
+    public Job(String title, String category, String description, String requirements, List<String> requiredSkills, String postedBy, int maxApplicants) {
+        this(title, category, description, requirements, requiredSkills, postedBy);
+        setMaxApplicants(maxApplicants);
     }
 
     public String getId() {
@@ -92,5 +102,17 @@ public class Job {
 
     public void setPostedBy(String postedBy) {
         this.postedBy = postedBy;
+    }
+
+    public int getMaxApplicants() {
+        return maxApplicants;
+    }
+
+    public void setMaxApplicants(int maxApplicants) {
+        if (maxApplicants <= 0) {
+            this.maxApplicants = DEFAULT_MAX_APPLICANTS;
+            return;
+        }
+        this.maxApplicants = Math.min(maxApplicants, MAX_ALLOWED_APPLICANTS);
     }
 }

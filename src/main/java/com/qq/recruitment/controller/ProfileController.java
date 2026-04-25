@@ -54,18 +54,32 @@ public class ProfileController {
             return;
         }
 
-        String major = majorField.getText();
-        String studentId = studentIdField.getText();
-        String skillsStr = skillsField.getText();
-        String bio = bioArea.getText();
+        String major = majorField.getText() == null ? "" : majorField.getText().trim();
+        String studentId = studentIdField.getText() == null ? "" : studentIdField.getText().trim();
+        String skillsStr = skillsField.getText() == null ? "" : skillsField.getText();
+        String bio = bioArea.getText() == null ? "" : bioArea.getText().trim();
+
+        if (major.isBlank() || studentId.isBlank()) {
+            showAlert(Alert.AlertType.ERROR, "Validation Error", "Major and Student ID cannot be blank.");
+            return;
+        }
 
         List<String> skills = Arrays.stream(skillsStr.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
 
+        UserProfile existingProfile = profileService.getProfile(currentUser.getUsername());
+        int currentWorkload = (existingProfile != null) ? existingProfile.getWorkload() : 0;
+
         UserProfile profile = new UserProfile(currentUser.getUsername(), major, studentId, skills, bio);
-        profileService.updateProfile(profile);
+        profile.setWorkload(currentWorkload);
+        try {
+            profileService.updateProfile(profile);
+        } catch (IllegalArgumentException ex) {
+            showAlert(Alert.AlertType.ERROR, "Validation Error", ex.getMessage());
+            return;
+        }
 
         showAlert(Alert.AlertType.INFORMATION, "Success", "Profile updated successfully!");
     }

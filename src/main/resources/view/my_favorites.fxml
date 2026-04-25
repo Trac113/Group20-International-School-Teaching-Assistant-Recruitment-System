@@ -8,25 +8,24 @@
 <?import javafx.scene.text.Font?>
 
 <VBox spacing="10" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.qq.recruitment.controller.MyApplicationsController">
+      fx:controller="com.qq.recruitment.controller.MyFavoritesController">
     <padding>
         <Insets bottom="20" left="20" right="20" top="20"/>
     </padding>
 
-    <Label text="My Applications">
+    <Label text="My Favorite Jobs">
         <font>
             <Font name="Tahoma" size="20"/>
         </font>
     </Label>
 
-    <TableView fx:id="appTable" VBox.vgrow="ALWAYS">
+    <TableView fx:id="favoriteTable" VBox.vgrow="ALWAYS">
         <columns>
-            <TableColumn fx:id="jobIdColumn" text="Job ID" prefWidth="150"/>
-            <TableColumn fx:id="jobTitleColumn" text="Job Title" prefWidth="200"/>
+            <TableColumn fx:id="jobIdColumn" text="Job ID" prefWidth="100"/>
+            <TableColumn fx:id="titleColumn" text="Title" prefWidth="180"/>
+            <TableColumn fx:id="categoryColumn" text="Category" prefWidth="130"/>
             <TableColumn fx:id="statusColumn" text="Status" prefWidth="100"/>
-            <TableColumn fx:id="appliedAtColumn" text="Applied At" prefWidth="150"/>
-            <TableColumn fx:id="actionColumn" text="Action" prefWidth="220"/>
+            <TableColumn fx:id="postedByColumn" text="Posted By" prefWidth="150"/>
         </columns>
     </TableView>
-
 </VBox>

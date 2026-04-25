@@ -37,7 +37,10 @@
     <Label text="Required Skills:" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
     <TextField fx:id="skillsField" GridPane.columnIndex="1" GridPane.rowIndex="5" promptText="Comma separated"/>
 
-    <Button text="Post Job" onAction="#handlePostJob" GridPane.columnIndex="1" GridPane.rowIndex="6"
+    <Label text="Max Applicants (1-30):" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+    <TextField fx:id="maxApplicantsField" GridPane.columnIndex="1" GridPane.rowIndex="6" promptText="Default 10"/>
+
+    <Button text="Post Job" onAction="#handlePostJob" GridPane.columnIndex="1" GridPane.rowIndex="7"
             GridPane.halignment="RIGHT"/>
 
 </GridPane>

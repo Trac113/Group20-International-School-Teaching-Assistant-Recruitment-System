@@ -4,9 +4,11 @@ import com.qq.recruitment.model.Job;
 import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.JobService;
 import com.qq.recruitment.util.SessionManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -23,6 +25,8 @@ public class MyJobsController {
     @FXML
     private TableView<Job> jobTable;
     @FXML
+    private TableColumn<Job, String> jobIdColumn;
+    @FXML
     private TableColumn<Job, String> titleColumn;
     @FXML
     private TableColumn<Job, String> categoryColumn;
@@ -35,6 +39,7 @@ public class MyJobsController {
 
     @FXML
     public void initialize() {
+        jobIdColumn.setCellValueFactory(data -> new SimpleStringProperty(JobService.toDisplayJobId(data.getValue().getId())));
         titleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTitle()));
         categoryColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
         statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
@@ -77,11 +82,22 @@ public class MyJobsController {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         if (currentUser == null) return;
 
-        List<Job> myJobs = jobService.getAllJobs().stream()
-                .filter(job -> currentUser.getUsername().equals(job.getPostedBy()))
-                .collect(Collectors.toList());
-
-        ObservableList<Job> jobs = FXCollections.observableArrayList(myJobs);
-        jobTable.setItems(jobs);
+        Task<List<Job>> task = new Task<>() {
+            @Override
+            protected List<Job> call() {
+                return jobService.getAllJobs().stream()
+                        .filter(job -> currentUser.getUsername().equals(job.getPostedBy()))
+                        .collect(Collectors.toList());
+            }
+        };
+        task.setOnSucceeded(event -> Platform.runLater(
+                () -> jobTable.setItems(FXCollections.observableArrayList(task.getValue()))
+        ));
+        task.setOnFailed(event -> Platform.runLater(
+                () -> jobTable.setItems(FXCollections.observableArrayList())
+        ));
+        Thread thread = new Thread(task, "my-jobs-loader");
+        thread.setDaemon(true);
+        thread.start();
     }
 }
