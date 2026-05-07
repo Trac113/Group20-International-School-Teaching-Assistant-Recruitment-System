@@ -1,0 +1,22 @@
+[
+  {
+    "username": "student",
+    "jobIds": [
+      "job-001",
+      "job-004"
+    ]
+  },
+  {
+    "username": "student2",
+    "jobIds": [
+      "job-003"
+    ]
+  },
+  {
+    "username": "student3",
+    "jobIds": [
+      "job-004",
+      "job-005"
+    ]
+  }
+]
