@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="14" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.qq.recruitment.controller.AdminManagementController">
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20"/>
+    </padding>
+
+    <Label text="Admin Management">
+        <font>
+            <Font name="Tahoma" size="22"/>
+        </font>
+    </Label>
+
+    <HBox spacing="14" VBox.vgrow="ALWAYS">
+        <VBox spacing="8" HBox.hgrow="ALWAYS">
+            <Label text="User Management">
+                <font><Font size="16"/></font>
+            </Label>
+            <TableView fx:id="userTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="usernameColumn" text="Username" prefWidth="120"/>
+                    <TableColumn fx:id="fullNameColumn" text="Full Name" prefWidth="140"/>
+                    <TableColumn fx:id="roleColumn" text="Role" prefWidth="110"/>
+                    <TableColumn fx:id="userActionColumn" text="Actions" prefWidth="320"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="8" HBox.hgrow="ALWAYS">
+            <Label text="Job Management">
+                <font><Font size="16"/></font>
+            </Label>
+            <TableView fx:id="jobTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="jobIdColumn" text="Job ID" prefWidth="110"/>
+                    <TableColumn fx:id="jobTitleColumn" text="Job Title" prefWidth="170"/>
+                    <TableColumn fx:id="jobPostedByColumn" text="Posted By" prefWidth="120"/>
+                    <TableColumn fx:id="jobStatusColumn" text="Status" prefWidth="90"/>
+                    <TableColumn fx:id="jobActionColumn" text="Actions" prefWidth="120"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </HBox>
+</VBox>
