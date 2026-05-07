@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="20" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.qq.recruitment.controller.AdminController">
+    <stylesheets>
+        <URL value="@styles.css"/>
+    </stylesheets>
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20"/>
+    </padding>
+
+    <Label text="Admin Dashboard" styleClass="page-title"/>
+
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Application Status Distribution" styleClass="panel-section-title"/>
+            <TableView fx:id="statusTable" styleClass="panel-blue" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="statusNameColumn" text="Status" prefWidth="180"/>
+                    <TableColumn fx:id="statusCountColumn" text="Count" prefWidth="100"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Applications per Job" styleClass="panel-section-title"/>
+            <TableView fx:id="jobTable" styleClass="panel-green" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="jobNameColumn" text="Job (ID | Title)" prefWidth="220"/>
+                    <TableColumn fx:id="jobCountColumn" text="Applications" prefWidth="110"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="TA Workload Distribution" styleClass="panel-section-title"/>
+            <TableView fx:id="workloadTable" styleClass="panel-orange" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="workloadNameColumn" text="Applicant" prefWidth="120"/>
+                    <TableColumn fx:id="workloadCountColumn" text="Accepted Jobs" prefWidth="110"/>
+                    <TableColumn fx:id="workloadJobsColumn" text="Accepted Job(s)" prefWidth="260"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Accepted per Job" styleClass="panel-section-title"/>
+            <TableView fx:id="hiredTable" styleClass="panel-purple" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="hiredNameColumn" text="Job (ID | Title)" prefWidth="240"/>
+                    <TableColumn fx:id="hiredCountColumn" text="Accepted" prefWidth="100"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </HBox>
+
+</VBox>
