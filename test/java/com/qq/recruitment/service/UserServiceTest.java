@@ -110,4 +110,28 @@ public class UserServiceTest {
         assertFalse(userService.register("normal_user", "password123", "Bad", "HACKER"),
                 "Unknown role should be rejected");
     }
+
+    @Test
+    public void testFullNameShouldBeUniqueForRegisterAndUpdate() {
+        File file = new File("src/main/resources/data/users.json");
+        if (file.exists()) {
+            file.delete();
+        }
+
+        UserService userService = new UserService();
+
+        assertTrue(userService.register("user_one", "password123", "Alice", "APPLICANT"));
+        assertFalse(userService.register("user_two", "password123", "Alice", "TEACHER"),
+                "Duplicate full name should be rejected during registration");
+        assertTrue(userService.register("user_two", "password123", "Bob", "TEACHER"));
+
+        assertFalse(userService.updateFullName("user_two", " Alice "),
+                "Duplicate full name should be rejected during update");
+        assertTrue(userService.updateFullName("user_two", "Charlie"),
+                "Unique full name should be accepted during update");
+
+        User updatedUser = userService.login("user_two", "password123");
+        assertNotNull(updatedUser);
+        assertEquals("Charlie", updatedUser.getFullName());
+    }
 }
