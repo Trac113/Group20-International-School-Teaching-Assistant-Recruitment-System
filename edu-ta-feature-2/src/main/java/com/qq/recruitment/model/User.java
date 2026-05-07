@@ -1,5 +1,9 @@
 package com.qq.recruitment.model;
 
+/**
+ * Represents a system user with authentication credentials and role-based access.
+ * Supported roles: APPLICANT, TEACHER, ADMIN.
+ */
 public class User {
     private String username;
     private String password;

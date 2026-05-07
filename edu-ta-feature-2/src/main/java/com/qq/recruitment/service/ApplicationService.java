@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Application management service handling job applications: submission with resume upload,
+ * withdrawal, resume updates, status changes with workload tracking, and async AI analysis triggers.
+ * Resume files are stored in src/main/resources/data/resumes/.
+ */
 public class ApplicationService {
     private static final String RESUME_DIR = "src/main/resources/data/resumes/";
     private static final int MAX_WORKLOAD = 3;
@@ -27,46 +32,52 @@ public class ApplicationService {
     }
 
     public boolean apply(String jobId, String username, File sourceResumeFile) {
-        // Check if already applied
-        JsonFileDAO freshDao = new JsonFileDAO();
-        boolean alreadyApplied = freshDao.getAllApplications().stream()
-                .anyMatch(app -> app.getJobId().equals(jobId)
-                        && app.getApplicantUsername().equals(username)
-                        && !"WITHDRAWN".equals(app.getStatus())
-                        && !"REJECTED".equals(app.getStatus()));
-        
-        if (alreadyApplied) {
-            return false;
-        }
+        synchronized (JsonFileDAO.class) {
+            // Check if already applied
+            JsonFileDAO freshDao = new JsonFileDAO();
+            boolean alreadyApplied = freshDao.getAllApplications().stream()
+                    .anyMatch(app -> app.getJobId().equals(jobId)
+                            && app.getApplicantUsername().equals(username)
+                            && !"WITHDRAWN".equals(app.getStatus())
+                            && !"REJECTED".equals(app.getStatus()));
 
-        if (new JobService().isJobAtCapacity(jobId)) {
-            return false;
-        }
-
-        String savedResumePath = "";
-        if (sourceResumeFile != null && sourceResumeFile.exists()) {
-            try {
-                // Generate unique filename to prevent overwriting
-                String ext = getFileExtension(sourceResumeFile.getName());
-                String newFileName = username + "_" + jobId + "_" + System.currentTimeMillis() + ext;
-                Path targetPath = Paths.get(RESUME_DIR + newFileName);
-                Files.copy(sourceResumeFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-                savedResumePath = targetPath.toString();
-            } catch (IOException e) {
-                e.printStackTrace();
-                // Depending on requirements, we might want to return false here if upload fails
+            if (alreadyApplied) {
+                return false;
             }
-        } else {
-            // For tests or dummy calls
-            savedResumePath = sourceResumeFile != null ? sourceResumeFile.getPath() : "dummy_path";
+
+            if (isApplicantWorkloadFull(username)) {
+                return false;
+            }
+
+            if (new JobService().isJobAtCapacity(jobId)) {
+                return false;
+            }
+
+            String savedResumePath = "";
+            if (sourceResumeFile != null && sourceResumeFile.exists()) {
+                try {
+                    // Generate unique filename to prevent overwriting
+                    String ext = getFileExtension(sourceResumeFile.getName());
+                    String newFileName = username + "_" + jobId + "_" + System.currentTimeMillis() + ext;
+                    Path targetPath = Paths.get(RESUME_DIR + newFileName);
+                    Files.copy(sourceResumeFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    savedResumePath = targetPath.toString();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            } else {
+                // For tests or dummy calls
+                savedResumePath = sourceResumeFile != null ? sourceResumeFile.getPath() : "dummy_path";
+            }
+
+            Application application = new Application(jobId, username, savedResumePath);
+            freshDao.addApplication(application);
+
+            runAiAnalysisAsync(application.getId());
+
+            return true;
         }
-
-        Application application = new Application(jobId, username, savedResumePath);
-        freshDao.addApplication(application);
-
-        runAiAnalysisAsync(application.getId());
-        
-        return true;
     }
 
     // Helper method for old tests
@@ -108,11 +119,11 @@ public class ApplicationService {
 
                     if ("ACCEPTED".equals(newStatus) && !"ACCEPTED".equals(oldStatus)) {
                         int currentWorkload = getApplicantWorkload(app.getApplicantUsername());
-                    int maxWorkload = getApplicantMaxWorkload(app.getApplicantUsername());
-                    if (currentWorkload >= maxWorkload) {
-                        return false;
+                        int maxWorkload = getApplicantMaxWorkload(app.getApplicantUsername());
+                        if (currentWorkload >= maxWorkload) {
+                            return false;
+                        }
                     }
-                }
 
                     app.setStatus(newStatus);
                     freshDao.saveApplications();
@@ -225,6 +236,10 @@ public class ApplicationService {
         }
         int max = profile.getMaxWorkload();
         return max >= 0 ? max : MAX_WORKLOAD;
+    }
+
+    public boolean isApplicantWorkloadFull(String username) {
+        return getApplicantWorkload(username) >= getApplicantMaxWorkload(username);
     }
 
     private UserProfile ensureProfile(ProfileService profileService, String username) {

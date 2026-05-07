@@ -5,14 +5,19 @@ import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.FavoriteService;
 import com.qq.recruitment.service.JobService;
 import com.qq.recruitment.util.SessionManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
 import java.util.List;
 
+/**
+ * Controller displaying the current user's favorite job postings in a read-only table.
+ */
 public class MyFavoritesController {
 
     @FXML
@@ -42,11 +47,24 @@ public class MyFavoritesController {
 
     private void loadFavorites() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            favoriteTable.setItems(FXCollections.observableArrayList());
-            return;
-        }
-        List<Job> favorites = favoriteService.getFavoriteJobs(currentUser.getUsername());
-        favoriteTable.setItems(FXCollections.observableArrayList(favorites));
+
+        Task<List<Job>> task = new Task<>() {
+            @Override
+            protected List<Job> call() {
+                if (currentUser == null) {
+                    return List.of();
+                }
+                return favoriteService.getFavoriteJobs(currentUser.getUsername());
+            }
+        };
+        task.setOnSucceeded(event -> Platform.runLater(
+                () -> favoriteTable.setItems(FXCollections.observableArrayList(task.getValue()))
+        ));
+        task.setOnFailed(event -> Platform.runLater(
+                () -> favoriteTable.setItems(FXCollections.observableArrayList())
+        ));
+        Thread thread = new Thread(task, "fav-loader");
+        thread.setDaemon(true);
+        thread.start();
     }
 }

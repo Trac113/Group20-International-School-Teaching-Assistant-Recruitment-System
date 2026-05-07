@@ -5,10 +5,13 @@ import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.ApplicationService;
 import com.qq.recruitment.service.FavoriteService;
 import com.qq.recruitment.service.JobService;
+import com.qq.recruitment.service.UserService;
 import com.qq.recruitment.util.SessionManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -22,7 +25,14 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+/**
+ * Applicant-facing controller for browsing open jobs, applying with resume upload,
+ * and managing favorite job postings. Displays recommended jobs sorted by skill-match score.
+ */
 public class ApplicantController {
 
     @FXML
@@ -34,7 +44,11 @@ public class ApplicantController {
     @FXML
     private TableColumn<Job, String> categoryColumn;
     @FXML
+    private TableColumn<Job, String> postedByColumn;
+    @FXML
     private TableColumn<Job, String> skillsColumn;
+    @FXML
+    private TableColumn<Job, String> requirementsColumn;
     @FXML
     private TableColumn<Job, String> descriptionColumn;
     @FXML
@@ -45,9 +59,14 @@ public class ApplicantController {
     private final JobService jobService = new JobService();
     private final ApplicationService applicationService = new ApplicationService();
     private final FavoriteService favoriteService = new FavoriteService();
+    private final UserService userService = new UserService();
+    private Map<String, String> userFullNames = Map.of();
 
     @FXML
     public void initialize() {
+        userFullNames = userService.getAllUsers().stream()
+                .collect(Collectors.toMap(User::getUsername, User::getFullName, (first, second) -> first));
+
         jobIdColumn.setCellValueFactory(data -> new SimpleStringProperty(JobService.toDisplayJobId(data.getValue().getId())));
         titleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTitle()));
         categoryColumn.setCellValueFactory(data -> {
@@ -56,15 +75,25 @@ public class ApplicantController {
             int max = job.getMaxApplicants();
             return new SimpleStringProperty(job.getCategory() + " (" + current + "/" + max + ")");
         });
+        postedByColumn.setCellValueFactory(data -> {
+            String username = data.getValue().getPostedBy();
+            return new SimpleStringProperty(userFullNames.getOrDefault(username, username));
+        });
         skillsColumn.setCellValueFactory(data -> new SimpleStringProperty(
                 data.getValue().getRequiredSkills() != null ? String.join(", ", data.getValue().getRequiredSkills()) : ""
         ));
+        requirementsColumn.setCellValueFactory(data -> new SimpleStringProperty(
+                data.getValue().getRequirements() != null ? data.getValue().getRequirements() : ""
+        ));
         descriptionColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDescription()));
+        favoriteColumn.setStyle("-fx-alignment: CENTER;");
+        actionColumn.setStyle("-fx-alignment: CENTER;");
 
         favoriteColumn.setCellFactory(param -> new TableCell<>() {
             private final Button favBtn = new Button();
 
             {
+                favBtn.getStyleClass().add("table-action-muted");
                 favBtn.setOnAction(event -> {
                     Job job = getTableView().getItems().get(getIndex());
                     User currentUser = SessionManager.getInstance().getCurrentUser();
@@ -93,8 +122,14 @@ public class ApplicantController {
             private final Button applyBtn = new Button("Apply");
             private final Label appliedLabel = new Label("Applied");
             private final Label fullLabel = new Label("Full");
+            private final Label workloadFullLabel = new Label("Over Limit");
 
             {
+                applyBtn.getStyleClass().add("table-action-primary");
+                appliedLabel.getStyleClass().add("table-status-label");
+                fullLabel.getStyleClass().add("table-status-label");
+                workloadFullLabel.getStyleClass().add("table-status-label");
+
                 applyBtn.setOnAction(event -> {
                     Job job = getTableView().getItems().get(getIndex());
                     handleApply(job);
@@ -113,6 +148,8 @@ public class ApplicantController {
                         setGraphic(appliedLabel);
                     } else if (jobService.isJobAtCapacity(job.getId())) {
                         setGraphic(fullLabel);
+                    } else if (currentUser != null && applicationService.isApplicantWorkloadFull(currentUser.getUsername())) {
+                        setGraphic(workloadFullLabel);
                     } else {
                         setGraphic(applyBtn);
                     }
@@ -125,12 +162,24 @@ public class ApplicantController {
 
     private void loadJobs() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
-        ObservableList<Job> jobs = FXCollections.observableArrayList(
-                currentUser == null
+
+        Task<List<Job>> task = new Task<>() {
+            @Override
+            protected List<Job> call() {
+                return (currentUser == null)
                         ? jobService.getOpenJobs()
-                        : jobService.getRecommendedOpenJobs(currentUser.getUsername())
-        );
-        jobTable.setItems(jobs);
+                        : jobService.getRecommendedOpenJobs(currentUser.getUsername());
+            }
+        };
+        task.setOnSucceeded(event -> Platform.runLater(
+                () -> jobTable.setItems(FXCollections.observableArrayList(task.getValue()))
+        ));
+        task.setOnFailed(event -> Platform.runLater(
+                () -> jobTable.setItems(FXCollections.observableArrayList())
+        ));
+        Thread thread = new Thread(task, "applicant-job-loader");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void handleApply(Job job) {
@@ -165,6 +214,12 @@ public class ApplicantController {
                 } else {
                     if (jobService.isJobAtCapacity(job.getId())) {
                         showAlert(Alert.AlertType.WARNING, "Warning", "This job has reached its application capacity.");
+                    } else if (applicationService.isApplicantWorkloadFull(currentUser.getUsername())) {
+                        showAlert(Alert.AlertType.WARNING, "Warning",
+                                "You have reached your maximum workload limit ("
+                                        + applicationService.getApplicantWorkload(currentUser.getUsername())
+                                        + "/" + applicationService.getApplicantMaxWorkload(currentUser.getUsername())
+                                        + "). Cannot apply for more positions.");
                     } else {
                         showAlert(Alert.AlertType.WARNING, "Warning", "You have already applied for this job.");
                     }

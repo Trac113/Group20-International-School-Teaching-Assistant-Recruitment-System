@@ -14,6 +14,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Admin dashboard service providing aggregate statistics:
+ * application status counts, per-job application counts, TA workload, and applicant accepted jobs.
+ * Filters out deleted accounts from all statistics.
+ */
 public class AdminService {
     private final JsonFileDAO dao;
 

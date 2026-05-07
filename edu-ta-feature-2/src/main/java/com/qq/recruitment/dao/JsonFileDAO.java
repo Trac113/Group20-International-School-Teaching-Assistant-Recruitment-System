@@ -14,6 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Monolithic data access object that reads and writes all entity types from flat JSON files.
+ * Each instance creates a fresh copy, so every call re-reads from disk with no caching.
+ * Thread safety is handled by callers via synchronized blocks.
+ */
 public class JsonFileDAO {
     private static final String USER_DATA_FILE = "src/main/resources/data/users.json";
     private static final String JOB_DATA_FILE = "src/main/resources/data/jobs.json";
@@ -96,7 +101,7 @@ public class JsonFileDAO {
             }
             objectMapper.writeValue(file, data);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to save data to " + filePath, e);
         }
     }
 

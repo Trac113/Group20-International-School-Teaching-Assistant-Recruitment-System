@@ -3,6 +3,9 @@ package com.qq.recruitment.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Tracks a user's favorite job postings for quick access.
+ */
 public class Favorite {
     private String username;
     private List<String> jobIds;

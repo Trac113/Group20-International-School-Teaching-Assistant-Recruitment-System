@@ -15,6 +15,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Job management service handling CRUD operations, job search with keyword relevance scoring,
+ * skill-based recommendation for applicants, capacity checks, and auto-incrementing job ID generation.
+ */
 public class JobService {
     private static final Pattern SIMPLE_JOB_ID_PATTERN = Pattern.compile("^job-\\d+$", Pattern.CASE_INSENSITIVE);
     private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-fA-F\\-]{32,}$");
@@ -67,19 +71,7 @@ public class JobService {
     }
 
     public List<Job> getAllJobs() {
-        List<Job> jobs = jobDAO.getAllJobs();
-        boolean changed = false;
-        for (Job job : jobs) {
-            int before = job.getMaxApplicants();
-            job.setMaxApplicants(before);
-            if (job.getMaxApplicants() != before) {
-                changed = true;
-            }
-        }
-        if (changed) {
-            jobDAO.saveJobs();
-        }
-        return jobs;
+        return jobDAO.getAllJobs();
     }
     
     public List<Job> getOpenJobs() {
@@ -97,6 +89,21 @@ public class JobService {
                 break;
             }
         }
+    }
+
+    public boolean updateJobDetails(String jobId, String description, String requirements) {
+        List<Job> allJobs = jobDAO.getAllJobs();
+        for (Job job : allJobs) {
+            if (job.getId().equals(jobId)) {
+                String normalizedDescription = normalizeRequiredField(description, "Description");
+                String normalizedRequirements = normalizeRequiredField(requirements, "Requirements");
+                job.setDescription(normalizedDescription);
+                job.setRequirements(normalizedRequirements);
+                jobDAO.saveJobs();
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<Job> searchOpenJobs(String keyword) {

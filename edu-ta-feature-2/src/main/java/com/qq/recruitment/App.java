@@ -9,14 +9,20 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Locale;
 
+/**
+ * JavaFX application entry point.
+ * Initializes the main stage with the login view and provides static navigation via setRoot().
+ */
 public class App extends Application {
 
     private static Scene scene;
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("login"), 640, 480);
+        scene = new Scene(loadFXML("login"), 960, 640);
         stage.setScene(scene);
+        stage.setMinWidth(760);
+        stage.setMinHeight(520);
         stage.setTitle("International School TA Recruitment System");
         stage.show();
     }

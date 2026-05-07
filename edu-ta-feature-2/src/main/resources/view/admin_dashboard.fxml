@@ -1,33 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<VBox spacing="20" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="20" styleClass="responsive-page" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.qq.recruitment.controller.AdminController">
+    <stylesheets>
+        <URL value="@styles.css"/>
+    </stylesheets>
     <padding>
         <Insets bottom="20" left="20" right="20" top="20"/>
     </padding>
 
-    <Label text="Admin Dashboard">
-        <font>
-            <Font name="Tahoma" size="24"/>
-        </font>
-    </Label>
+    <Label text="Admin Dashboard" styleClass="page-title"/>
 
-    <HBox spacing="20" VBox.vgrow="ALWAYS">
-        <VBox spacing="10" HBox.hgrow="ALWAYS">
-            <Label text="Application Status Distribution">
-                <font>
-                    <Font size="16"/>
-                </font>
-            </Label>
-            <TableView fx:id="statusTable" VBox.vgrow="ALWAYS">
+    <GridPane hgap="16" vgap="16" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="50.0" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="50.0" hgrow="ALWAYS"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints percentHeight="50.0" vgrow="ALWAYS"/>
+            <RowConstraints percentHeight="50.0" vgrow="ALWAYS"/>
+        </rowConstraints>
+
+        <VBox spacing="10" maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS">
+            <Label text="Application Status Distribution" styleClass="panel-section-title"/>
+            <TableView fx:id="statusTable" styleClass="panel-blue" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="statusNameColumn" text="Status" prefWidth="180"/>
                     <TableColumn fx:id="statusCountColumn" text="Count" prefWidth="100"/>
@@ -35,13 +41,9 @@
             </TableView>
         </VBox>
 
-        <VBox spacing="10" HBox.hgrow="ALWAYS">
-            <Label text="Applications per Job">
-                <font>
-                    <Font size="16"/>
-                </font>
-            </Label>
-            <TableView fx:id="jobTable" VBox.vgrow="ALWAYS">
+        <VBox spacing="10" maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS">
+            <Label text="Applications per Job" styleClass="panel-section-title"/>
+            <TableView fx:id="jobTable" styleClass="panel-green" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="jobNameColumn" text="Job (ID | Title)" prefWidth="220"/>
                     <TableColumn fx:id="jobCountColumn" text="Applications" prefWidth="110"/>
@@ -49,34 +51,27 @@
             </TableView>
         </VBox>
 
-        <VBox spacing="10" HBox.hgrow="ALWAYS">
-            <Label text="TA Workload Distribution">
-                <font>
-                    <Font size="16"/>
-                </font>
-            </Label>
-            <TableView fx:id="workloadTable" VBox.vgrow="ALWAYS">
+        <VBox spacing="10" maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+            <Label text="TA Workload Distribution" styleClass="panel-section-title"/>
+            <TableView fx:id="workloadTable" styleClass="panel-orange" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="workloadNameColumn" text="Applicant" prefWidth="120"/>
+                    <TableColumn fx:id="workloadFullNameColumn" text="Full Name" prefWidth="150"/>
                     <TableColumn fx:id="workloadCountColumn" text="Accepted Jobs" prefWidth="110"/>
                     <TableColumn fx:id="workloadJobsColumn" text="Accepted Job(s)" prefWidth="260"/>
                 </columns>
             </TableView>
         </VBox>
 
-        <VBox spacing="10" HBox.hgrow="ALWAYS">
-            <Label text="Accepted per Job">
-                <font>
-                    <Font size="16"/>
-                </font>
-            </Label>
-            <TableView fx:id="hiredTable" VBox.vgrow="ALWAYS">
+        <VBox spacing="10" maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+            <Label text="Accepted per Job" styleClass="panel-section-title"/>
+            <TableView fx:id="hiredTable" styleClass="panel-purple" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="hiredNameColumn" text="Job (ID | Title)" prefWidth="240"/>
                     <TableColumn fx:id="hiredCountColumn" text="Accepted" prefWidth="100"/>
                 </columns>
             </TableView>
         </VBox>
-    </HBox>
+    </GridPane>
 
 </VBox>

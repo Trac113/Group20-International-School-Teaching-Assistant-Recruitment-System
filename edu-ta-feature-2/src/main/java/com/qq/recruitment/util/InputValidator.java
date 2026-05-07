@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * Utility for input validation and normalization.
+ * Validates usernames, passwords, roles, text fields, and tag lists against security constraints.
+ * All methods are static; this class cannot be instantiated.
+ */
 public final class InputValidator {
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9_.-]{1,32}$");
     private static final Set<String> ALLOWED_ROLES = Set.of("APPLICANT", "TEACHER", "ADMIN");

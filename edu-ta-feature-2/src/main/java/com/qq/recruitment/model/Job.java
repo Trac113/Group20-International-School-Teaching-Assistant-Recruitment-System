@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Represents a job posting with title, category, requirements, and application limits.
+ * Job IDs use auto-increment format (job-001, job-002) with legacy UUID support.
+ */
 public class Job {
     public static final int DEFAULT_MAX_APPLICANTS = 10;
     public static final int MAX_ALLOWED_APPLICANTS = 30;

@@ -17,6 +17,11 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * AI screening service that calls the Volcengine Ark API (Doubao model) to score
+ * candidate applications 0-100 with analysis text. Includes retry logic for transient failures
+ * and a hash-based mock fallback when the API is unavailable.
+ */
 public class AIService {
     private static final String API_KEY = "12b115aa-12ab-4e12-a134-9ce904570a20";
     private static final String MODEL_EP = "doubao-seed-2-0-pro-260215";

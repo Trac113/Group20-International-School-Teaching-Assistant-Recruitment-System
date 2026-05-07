@@ -7,6 +7,10 @@ import com.qq.recruitment.util.InputValidator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * User authentication and account management service.
+ * Handles registration, login (plaintext comparison), role/password updates, and deletion (protects ADMIN).
+ */
 public class UserService {
     private final JsonFileDAO userDAO;
 
@@ -111,5 +115,19 @@ public class UserService {
         User user = userOpt.get();
         user.setPassword(normalizedPassword);
         return userDAO.updateUser(user);
+    }
+
+    public boolean updateFullName(String username, String fullName) {
+        Optional<User> userOpt = userDAO.findUserByUsername(username);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        User user = userOpt.get();
+        user.setFullName(fullName);
+        return userDAO.updateUser(user);
+    }
+
+    public Optional<User> findUserByUsername(String username) {
+        return userDAO.findUserByUsername(username);
     }
 }

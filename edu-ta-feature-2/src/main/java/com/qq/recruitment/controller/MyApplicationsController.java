@@ -6,9 +6,11 @@ import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.ApplicationService;
 import com.qq.recruitment.service.JobService;
 import com.qq.recruitment.util.SessionManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -22,8 +24,15 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+/**
+ * Controller displaying the current user's submitted applications.
+ * Allows withdrawing pending applications and updating resume files.
+ */
 public class MyApplicationsController {
 
     @FXML
@@ -41,6 +50,7 @@ public class MyApplicationsController {
 
     private final ApplicationService applicationService = new ApplicationService();
     private final JobService jobService = new JobService();
+    private Map<String, Job> jobMap = new LinkedHashMap<>();
 
     @FXML
     public void initialize() {
@@ -50,22 +60,26 @@ public class MyApplicationsController {
         
         jobTitleColumn.setCellValueFactory(data -> {
             String jId = data.getValue().getJobId();
-            String title = jobService.getAllJobs().stream()
-                    .filter(j -> j.getId().equals(jId))
-                    .map(Job::getTitle)
-                    .findFirst()
-                    .orElse("Unknown Job");
+            Job job = jobMap.get(jId);
+            String title = (job != null && job.getTitle() != null && !job.getTitle().isBlank()) ? job.getTitle() : "Unknown Job";
             return new SimpleStringProperty(title);
         });
 
         statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
         appliedAtColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getAppliedAt()));
+        actionColumn.setStyle("-fx-alignment: CENTER;");
         actionColumn.setCellFactory(param -> new TableCell<>() {
             private final Button withdrawBtn = new Button("Withdraw");
             private final Button updateResumeBtn = new Button("Update Resume");
             private final HBox pane = new HBox(6, withdrawBtn, updateResumeBtn);
+            private final Label noActionLabel = new Label("-");
 
             {
+                pane.setFillHeight(false);
+                withdrawBtn.getStyleClass().add("table-action-danger");
+                updateResumeBtn.getStyleClass().add("table-action-primary");
+                noActionLabel.getStyleClass().add("table-status-label");
+
                 withdrawBtn.setOnAction(event -> {
                     Application app = getTableView().getItems().get(getIndex());
                     handleWithdraw(app);
@@ -86,7 +100,7 @@ public class MyApplicationsController {
                     if ("PENDING".equals(app.getStatus())) {
                         setGraphic(pane);
                     } else {
-                        setGraphic(new Label("-"));
+                        setGraphic(noActionLabel);
                     }
                 }
             }
@@ -99,9 +113,30 @@ public class MyApplicationsController {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         if (currentUser == null) return;
 
-        List<Application> myApps = applicationService.getApplicationsByApplicant(currentUser.getUsername());
-        ObservableList<Application> apps = FXCollections.observableArrayList(myApps);
-        appTable.setItems(apps);
+        Task<MyAppsResult> task = new Task<>() {
+            @Override
+            protected MyAppsResult call() {
+                List<Job> jobs = jobService.getAllJobs();
+                Map<String, Job> localJobMap = jobs.stream()
+                        .filter(j -> j.getId() != null)
+                        .collect(Collectors.toMap(Job::getId, j -> j, (a, b) -> a, LinkedHashMap::new));
+                List<Application> myApps = applicationService.getApplicationsByApplicant(currentUser.getUsername());
+                return new MyAppsResult(FXCollections.observableArrayList(myApps), localJobMap);
+            }
+        };
+        task.setOnSucceeded(event -> Platform.runLater(() -> {
+            MyAppsResult result = task.getValue();
+            jobMap = result.jobMap;
+            appTable.setItems(result.items);
+            appTable.refresh();
+        }));
+        task.setOnFailed(event -> Platform.runLater(() -> {
+            appTable.setItems(FXCollections.observableArrayList());
+            jobMap = new LinkedHashMap<>();
+        }));
+        Thread thread = new Thread(task, "my-apps-loader");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void handleWithdraw(Application app) {
@@ -151,5 +186,8 @@ public class MyApplicationsController {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    private record MyAppsResult(ObservableList<Application> items, Map<String, Job> jobMap) {
     }
 }

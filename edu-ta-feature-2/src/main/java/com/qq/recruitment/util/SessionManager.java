@@ -2,6 +2,10 @@ package com.qq.recruitment.util;
 
 import com.qq.recruitment.model.User;
 
+/**
+ * Singleton that manages the current login session.
+ * Holds the active user in memory and provides login/logout state checks.
+ */
 public class SessionManager {
     private static SessionManager instance;
     private User currentUser;

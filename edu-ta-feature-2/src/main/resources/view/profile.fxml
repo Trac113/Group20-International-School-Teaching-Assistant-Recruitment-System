@@ -1,40 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<VBox spacing="10" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="15" styleClass="responsive-page" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.qq.recruitment.controller.ProfileController">
+    <stylesheets>
+        <URL value="@styles.css"/>
+    </stylesheets>
     <padding>
-        <Insets bottom="20" left="20" right="20" top="20"/>
+        <Insets bottom="25" left="25" right="25" top="25"/>
     </padding>
 
-    <Label text="My Profile">
-        <font>
-            <Font name="Tahoma" size="20"/>
-        </font>
-    </Label>
+    <Label text="My Profile" styleClass="page-title"/>
 
-    <GridPane hgap="10" vgap="10">
-        <Label text="Major:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-        <TextField fx:id="majorField" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="300"/>
+    <VBox styleClass="card" spacing="16" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+        <padding>
+            <Insets bottom="24" left="24" right="24" top="24"/>
+        </padding>
 
-        <Label text="Student ID:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-        <TextField fx:id="studentIdField" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <GridPane hgap="16" vgap="14" maxWidth="1.7976931348623157E308">
+            <columnConstraints>
+                <ColumnConstraints minWidth="150.0" hgrow="NEVER"/>
+                <ColumnConstraints minWidth="260.0" hgrow="ALWAYS"/>
+            </columnConstraints>
+            <Label text="Full Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="text-secondary"/>
+            <TextField fx:id="fullNameField" promptText="Enter your full name" styleClass="form-field" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-        <Label text="Skills (comma separated):" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-        <TextField fx:id="skillsField" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            <Label text="Major:" GridPane.columnIndex="0" GridPane.rowIndex="1" styleClass="text-secondary"/>
+            <TextField fx:id="majorField" promptText="Enter your major" styleClass="form-field" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-        <Label text="Bio / Introduction:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-        <TextArea fx:id="bioArea" prefRowCount="4" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-        
-        <Button text="Save Profile" onAction="#handleSave" GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.halignment="RIGHT"/>
-    </GridPane>
+            <Label text="Student ID:" GridPane.columnIndex="0" GridPane.rowIndex="2" styleClass="text-secondary"/>
+            <TextField fx:id="studentIdField" promptText="e.g., 2024001" styleClass="form-field" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+            <Label text="Skills:" GridPane.columnIndex="0" GridPane.rowIndex="3" styleClass="text-secondary"/>
+            <TextField fx:id="skillsField" promptText="Comma separated, e.g., Java, Python" styleClass="form-field" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+            <Label text="Bio / Introduction:" GridPane.columnIndex="0" GridPane.rowIndex="4" styleClass="text-secondary"/>
+            <TextArea fx:id="bioArea" prefRowCount="4" wrapText="true" styleClass="form-field" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+
+            <Button text="Save Profile" onAction="#handleSave" styleClass="btn-primary" GridPane.columnIndex="1" GridPane.rowIndex="5" GridPane.halignment="RIGHT"/>
+        </GridPane>
+    </VBox>
 
 </VBox>

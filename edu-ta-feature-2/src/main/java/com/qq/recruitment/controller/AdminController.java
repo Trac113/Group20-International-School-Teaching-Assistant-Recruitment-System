@@ -1,6 +1,8 @@
 package com.qq.recruitment.controller;
 
+import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.AdminService;
+import com.qq.recruitment.service.UserService;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,7 +13,13 @@ import javafx.concurrent.Task;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+/**
+ * Admin dashboard controller that displays real-time statistics:
+ * application status counts, job application counts, TA workload, and accepted job lists.
+ * Data loads asynchronously on daemon threads to keep the UI responsive.
+ */
 public class AdminController {
 
     @FXML
@@ -31,6 +39,8 @@ public class AdminController {
     @FXML
     private TableColumn<WorkloadRow, String> workloadNameColumn;
     @FXML
+    private TableColumn<WorkloadRow, String> workloadFullNameColumn;
+    @FXML
     private TableColumn<WorkloadRow, Integer> workloadCountColumn;
     @FXML
     private TableColumn<WorkloadRow, String> workloadJobsColumn;
@@ -42,6 +52,7 @@ public class AdminController {
     private TableColumn<StatRow, Integer> hiredCountColumn;
 
     private final AdminService adminService = new AdminService();
+    private final UserService userService = new UserService();
 
     @FXML
     public void initialize() {
@@ -57,11 +68,27 @@ public class AdminController {
         jobCountColumn.setCellValueFactory(data -> data.getValue().valueProperty().asObject());
 
         workloadNameColumn.setCellValueFactory(data -> data.getValue().nameProperty());
+        workloadFullNameColumn.setCellValueFactory(data -> data.getValue().fullNameProperty());
         workloadCountColumn.setCellValueFactory(data -> data.getValue().valueProperty().asObject());
         workloadJobsColumn.setCellValueFactory(data -> data.getValue().jobsProperty());
 
         hiredNameColumn.setCellValueFactory(data -> data.getValue().nameProperty());
         hiredCountColumn.setCellValueFactory(data -> data.getValue().valueProperty().asObject());
+
+        disableDashboardSorting();
+    }
+
+    private void disableDashboardSorting() {
+        statusNameColumn.setSortable(false);
+        statusCountColumn.setSortable(false);
+        jobNameColumn.setSortable(false);
+        jobCountColumn.setSortable(false);
+        workloadNameColumn.setSortable(false);
+        workloadFullNameColumn.setSortable(false);
+        workloadCountColumn.setSortable(false);
+        workloadJobsColumn.setSortable(false);
+        hiredNameColumn.setSortable(false);
+        hiredCountColumn.setSortable(false);
     }
 
     private void loadAllStatsAsync() {
@@ -73,6 +100,8 @@ public class AdminController {
                         adminService.getJobApplicationCounts(),
                         adminService.getTAWorkloadStats(),
                         adminService.getApplicantAcceptedJobs(),
+                        userService.getAllUsers().stream()
+                                .collect(Collectors.toMap(User::getUsername, User::getFullName, (first, second) -> first)),
                         adminService.getJobAcceptedCounts()
                 );
             }
@@ -83,7 +112,7 @@ public class AdminController {
             Platform.runLater(() -> {
                 statusTable.setItems(toRows(result.statusStats));
                 jobTable.setItems(toRows(result.jobStats));
-                workloadTable.setItems(toWorkloadRows(result.workloadStats, result.workloadJobs));
+                workloadTable.setItems(toWorkloadRows(result.workloadStats, result.workloadJobs, result.userFullNames));
                 hiredTable.setItems(toRows(result.hiredStats));
             });
         });
@@ -108,11 +137,14 @@ public class AdminController {
         return rows;
     }
 
-    private ObservableList<WorkloadRow> toWorkloadRows(Map<String, Integer> workloadStats, Map<String, String> workloadJobs) {
+    private ObservableList<WorkloadRow> toWorkloadRows(Map<String, Integer> workloadStats,
+                                                       Map<String, String> workloadJobs,
+                                                       Map<String, String> userFullNames) {
         ObservableList<WorkloadRow> rows = FXCollections.observableArrayList();
         for (Map.Entry<String, Integer> entry : workloadStats.entrySet()) {
             String username = entry.getKey();
-            rows.add(new WorkloadRow(username, entry.getValue(), workloadJobs.getOrDefault(username, "-")));
+            String fullName = userFullNames.getOrDefault(username, username);
+            rows.add(new WorkloadRow(username, fullName, entry.getValue(), workloadJobs.getOrDefault(username, "-")));
         }
         rows.sort(Comparator.comparingInt(WorkloadRow::getValue).reversed().thenComparing(WorkloadRow::getName));
         return rows;
@@ -123,17 +155,20 @@ public class AdminController {
         private final Map<String, Integer> jobStats;
         private final Map<String, Integer> workloadStats;
         private final Map<String, String> workloadJobs;
+        private final Map<String, String> userFullNames;
         private final Map<String, Integer> hiredStats;
 
         private DashboardData(Map<String, Integer> statusStats,
                               Map<String, Integer> jobStats,
                               Map<String, Integer> workloadStats,
                               Map<String, String> workloadJobs,
+                              Map<String, String> userFullNames,
                               Map<String, Integer> hiredStats) {
             this.statusStats = statusStats == null ? Map.of() : statusStats;
             this.jobStats = jobStats == null ? Map.of() : jobStats;
             this.workloadStats = workloadStats == null ? Map.of() : workloadStats;
             this.workloadJobs = workloadJobs == null ? Map.of() : workloadJobs;
+            this.userFullNames = userFullNames == null ? Map.of() : userFullNames;
             this.hiredStats = hiredStats == null ? Map.of() : hiredStats;
         }
     }
@@ -166,11 +201,13 @@ public class AdminController {
 
     public static class WorkloadRow {
         private final javafx.beans.property.SimpleStringProperty name;
+        private final javafx.beans.property.SimpleStringProperty fullName;
         private final javafx.beans.property.SimpleIntegerProperty value;
         private final javafx.beans.property.SimpleStringProperty jobs;
 
-        public WorkloadRow(String name, int value, String jobs) {
+        public WorkloadRow(String name, String fullName, int value, String jobs) {
             this.name = new javafx.beans.property.SimpleStringProperty(name);
+            this.fullName = new javafx.beans.property.SimpleStringProperty(fullName);
             this.value = new javafx.beans.property.SimpleIntegerProperty(value);
             this.jobs = new javafx.beans.property.SimpleStringProperty(jobs);
         }
@@ -185,6 +222,10 @@ public class AdminController {
 
         public javafx.beans.property.SimpleStringProperty nameProperty() {
             return name;
+        }
+
+        public javafx.beans.property.SimpleStringProperty fullNameProperty() {
+            return fullName;
         }
 
         public javafx.beans.property.SimpleIntegerProperty valueProperty() {

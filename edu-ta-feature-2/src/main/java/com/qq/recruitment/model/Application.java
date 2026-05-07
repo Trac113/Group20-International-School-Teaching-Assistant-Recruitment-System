@@ -3,6 +3,10 @@ package com.qq.recruitment.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Represents a candidate's application for a specific job, including AI match score
+ * and analysis results from the Volcengine Ark service.
+ */
 public class Application {
     private String id;
     private String jobId;

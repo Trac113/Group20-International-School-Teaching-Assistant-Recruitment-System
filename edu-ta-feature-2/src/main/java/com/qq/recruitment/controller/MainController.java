@@ -5,13 +5,22 @@ import com.qq.recruitment.model.User;
 import com.qq.recruitment.util.SessionManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableView;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 
+/**
+ * Main application shell controller that builds the role-based sidebar navigation
+ * and manages the central content area by dynamically loading FXML views.
+ */
 public class MainController {
 
     @FXML
@@ -43,6 +52,7 @@ public class MainController {
             addNavButton("My Favorites", "my_favorites");
             addNavButton("My Applications", "my_applications");
         } else if ("TEACHER".equals(role)) {
+            addNavButton("My Account", "teacher_account");
             addNavButton("Post a Job", "job_post");
             addNavButton("Manage My Jobs", "my_jobs");
             addNavButton("Screening", "screening_list");
@@ -55,7 +65,7 @@ public class MainController {
     private void addNavButton(String text, String fxmlName) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setStyle("-fx-background-color: transparent; -fx-border-color: #dddddd; -fx-border-width: 0 0 1 0; -fx-padding: 10; -fx-alignment: center-left;");
+        btn.getStyleClass().add("nav-btn");
         btn.setOnAction(e -> loadContent(fxmlName));
         sidebar.getChildren().add(btn);
     }
@@ -64,14 +74,37 @@ public class MainController {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("/view/" + fxml + ".fxml"));
             Parent root = fxmlLoader.load();
+            applyResponsiveBehavior(root);
+
+            ScrollPane scroller = new ScrollPane(root);
+            scroller.setFitToWidth(true);
+            scroller.setFitToHeight(true);
+            scroller.setPannable(true);
+            scroller.getStyleClass().add("content-scroll");
+
             contentArea.getChildren().clear();
-            contentArea.getChildren().add(root);
-            // Make the loaded content grow to fill the area
-            // javafx.scene.layout.VBox.setVgrow(root, javafx.scene.layout.Priority.ALWAYS);
+            contentArea.getChildren().add(scroller);
+            VBox.setVgrow(scroller, Priority.ALWAYS);
         } catch (IOException e) {
             e.printStackTrace();
             contentArea.getChildren().clear();
             contentArea.getChildren().add(new Label("Error loading " + fxml));
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void applyResponsiveBehavior(Node node) {
+        if (node instanceof Region region) {
+            region.setMaxWidth(Double.MAX_VALUE);
+            region.setMaxHeight(Double.MAX_VALUE);
+        }
+        if (node instanceof TableView tableView) {
+            tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        }
+        if (node instanceof Parent parent) {
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                applyResponsiveBehavior(child);
+            }
         }
     }
 

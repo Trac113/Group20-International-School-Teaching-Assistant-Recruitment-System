@@ -6,6 +6,10 @@ import com.qq.recruitment.util.InputValidator;
 
 import java.util.Optional;
 
+/**
+ * Service for retrieving and updating applicant profiles, including major, student ID, skills, bio,
+ * and max workload configuration with input validation.
+ */
 public class ProfileService {
     public UserProfile getProfile(String username) {
         JsonFileDAO dao = new JsonFileDAO();
@@ -43,7 +47,7 @@ public class ProfileService {
             return false;
         }
 
-        if (workload < 0) {
+        if (workload < 1) {
             return false;
         }
         JsonFileDAO dao = new JsonFileDAO();

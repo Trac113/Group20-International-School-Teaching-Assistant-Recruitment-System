@@ -34,6 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Screening controller for teachers and admins to review applications.
+ * Displays applicant details, AI scores, resume access, and supports individual/batch accept-reject
+ * decisions with workload capacity checks and role-based permission enforcement.
+ */
 public class ScreeningController {
 
     @FXML
@@ -90,6 +95,7 @@ public class ScreeningController {
     private String selectedResumePath;
     private final Map<String, BooleanProperty> checkedMap = new LinkedHashMap<>();
     private Map<String, Job> jobMap = new LinkedHashMap<>();
+    private Map<String, User> userMap = new LinkedHashMap<>();
 
     @FXML
     public void initialize() {
@@ -97,12 +103,14 @@ public class ScreeningController {
         applicationTable.setEditable(true);
         jobIdColumn.setCellValueFactory(data -> new SimpleStringProperty(JobService.toDisplayJobId(data.getValue().getJobId())));
         jobTitleColumn.setCellValueFactory(data -> new SimpleStringProperty(resolveJobTitle(data.getValue().getJobId())));
-        applicantColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getApplicantUsername()));
+        applicantColumn.setCellValueFactory(data -> new SimpleStringProperty(resolveApplicantFullName(data.getValue().getApplicantUsername())));
         workloadColumn.setCellValueFactory(data -> new SimpleStringProperty(resolveApplicantWorkload(data.getValue().getApplicantUsername())));
         capacityColumn.setCellValueFactory(data -> new SimpleStringProperty(resolveJobCapacity(data.getValue().getJobId())));
         appliedAtColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getAppliedAt()));
         statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
         scoreColumn.setCellValueFactory(data -> new javafx.beans.property.SimpleIntegerProperty(data.getValue().getMatchScore()));
+        selectColumn.setStyle("-fx-alignment: CENTER;");
+        actionColumn.setStyle("-fx-alignment: CENTER;");
 
         selectColumn.setEditable(true);
         selectColumn.setCellValueFactory(cellData -> getCheckedProperty(cellData.getValue().getId()));
@@ -122,17 +130,26 @@ public class ScreeningController {
             private final HBox pane = new HBox(5, acceptBtn, rejectBtn);
 
             {
-                acceptBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
-                rejectBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
+                pane.setFillHeight(false);
+                acceptBtn.getStyleClass().add("btn-accept");
+                rejectBtn.getStyleClass().add("btn-danger");
 
                 acceptBtn.setOnAction(event -> {
                     Application app = getTableView().getItems().get(getIndex());
-                    handleUpdateStatus(app, "ACCEPTED");
+                    String fullName = resolveApplicantFullName(app.getApplicantUsername());
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to accept " + fullName + "?", ButtonType.YES, ButtonType.NO);
+                    confirm.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.YES) handleUpdateStatus(app, "ACCEPTED");
+                    });
                 });
 
                 rejectBtn.setOnAction(event -> {
                     Application app = getTableView().getItems().get(getIndex());
-                    handleUpdateStatus(app, "REJECTED");
+                    String fullName = resolveApplicantFullName(app.getApplicantUsername());
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to reject " + fullName + "?", ButtonType.YES, ButtonType.NO);
+                    confirm.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.YES) handleUpdateStatus(app, "REJECTED");
+                    });
                 });
             }
 
@@ -163,7 +180,7 @@ public class ScreeningController {
                             rejectBtn.setDisable(false);
                             acceptBtn.setText("At Capacity");
                             rejectBtn.setText("Reject");
-                            acceptBtn.setTooltip(new Tooltip("Applicant workload reached limit: "
+                            acceptBtn.setTooltip(new Tooltip("Applicant " + resolveApplicantFullName(app.getApplicantUsername()) + " workload reached limit: "
                                     + applicationService.getApplicantWorkload(app.getApplicantUsername())
                                     + "/" + applicationService.getApplicantMaxWorkload(app.getApplicantUsername())));
                             rejectBtn.setTooltip(null);
@@ -177,7 +194,13 @@ public class ScreeningController {
                         }
                         setGraphic(pane);
                     } else {
-                        setGraphic(new Label(app.getStatus()));
+                        Label statusLabel = new Label(app.getStatus());
+                        statusLabel.getStyleClass().add("table-status-label");
+                        statusLabel.setOnMouseClicked(e -> {
+                            showAlert(Alert.AlertType.WARNING, "Warning",
+                                    "This application has already been " + app.getStatus().toLowerCase() + ".");
+                        });
+                        setGraphic(statusLabel);
                     }
                 }
             }
@@ -194,9 +217,13 @@ public class ScreeningController {
                 Map<String, Job> localJobMap = jobs.stream()
                         .filter(j -> j.getId() != null)
                         .collect(Collectors.toMap(Job::getId, j -> j, (a, b) -> a, LinkedHashMap::new));
+                List<User> allUsers = userService.getAllUsers();
+                Map<String, User> localUserMap = allUsers.stream()
+                        .filter(u -> u.getUsername() != null)
+                        .collect(Collectors.toMap(User::getUsername, u -> u, (a, b) -> a, LinkedHashMap::new));
                 User currentUser = SessionManager.getInstance().getCurrentUser();
                 List<Application> filtered = filterByRole(applicationService.getAllApplications(), currentUser, localJobMap);
-                return new LoadResult(FXCollections.observableArrayList(filtered), localJobMap);
+                return new LoadResult(FXCollections.observableArrayList(filtered), localJobMap, localUserMap);
             }
         };
 
@@ -204,12 +231,14 @@ public class ScreeningController {
             LoadResult result = task.getValue();
             applicationTable.setItems(result.items());
             jobMap = result.jobMap();
+            userMap = result.userMap();
             checkedMap.clear();
             applicationTable.refresh();
         }));
         task.setOnFailed(event -> Platform.runLater(() -> {
             applicationTable.setItems(FXCollections.observableArrayList());
             jobMap = new LinkedHashMap<>();
+            userMap = new LinkedHashMap<>();
             checkedMap.clear();
         }));
 
@@ -315,9 +344,54 @@ public class ScreeningController {
             showAlert(Alert.AlertType.WARNING, "Warning", "No checked applications.");
             return;
         }
+
+        // Check job capacity before accepting: count pending per job + current accepted
+        Map<String, Integer> pendingPerJob = new LinkedHashMap<>();
+        for (Application app : selected) {
+            if ("PENDING".equals(app.getStatus())) {
+                pendingPerJob.merge(app.getJobId(), 1, Integer::sum);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : pendingPerJob.entrySet()) {
+            String jobId = entry.getKey();
+            Job job = jobMap.get(jobId);
+            if (job == null) continue;
+            int currentAccepted = jobService.getCurrentApplicantCount(jobId);
+            if (currentAccepted + entry.getValue() > job.getMaxApplicants()) {
+                showAlert(Alert.AlertType.WARNING, "Warning",
+                        "Job \"" + job.getTitle() + "\" only has " + (job.getMaxApplicants() - currentAccepted)
+                                + " slot(s) remaining but " + entry.getValue()
+                                + " applicant(s) selected. Please reduce your selection.");
+                return;
+            }
+        }
+
+        // Check applicant workload before accepting: count pending per applicant + current workload
+        Map<String, Integer> pendingPerApplicant = new LinkedHashMap<>();
+        for (Application app : selected) {
+            if ("PENDING".equals(app.getStatus())) {
+                pendingPerApplicant.merge(app.getApplicantUsername(), 1, Integer::sum);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : pendingPerApplicant.entrySet()) {
+            String username = entry.getKey();
+            int currentWorkload = applicationService.getApplicantWorkload(username);
+            int maxWorkload = applicationService.getApplicantMaxWorkload(username);
+            int remaining = maxWorkload - currentWorkload;
+            if (entry.getValue() > remaining) {
+                showAlert(Alert.AlertType.WARNING, "Warning",
+                        "Applicant \"" + resolveApplicantFullName(username) + "\" only has " + remaining
+                                + " workload slot(s) remaining (current: " + currentWorkload
+                                + "/" + maxWorkload + ") but " + entry.getValue()
+                                + " application(s) selected. Please reduce your selection.");
+                return;
+            }
+        }
+
         int acceptedCount = 0;
         int blockedCount = 0;
         int unauthorizedCount = 0;
+        int alreadyProcessedCount = 0;
         for (Application app : selected) {
             if ("PENDING".equals(app.getStatus())) {
                 if (isDeletedApplicant(app)) {
@@ -335,15 +409,20 @@ public class ScreeningController {
                 } else {
                     blockedCount++;
                 }
+            } else {
+                alreadyProcessedCount++;
             }
         }
-        if (acceptedCount > 0 || blockedCount > 0 || unauthorizedCount > 0) {
+        if (acceptedCount > 0 || blockedCount > 0 || unauthorizedCount > 0 || alreadyProcessedCount > 0) {
             loadApplications();
             applicationTable.refresh();
-            showAlert(Alert.AlertType.INFORMATION, "Batch Result",
-                    "Accepted: " + acceptedCount
-                            + "\nBlocked (workload/deleted): " + blockedCount
-                            + "\nNo permission: " + unauthorizedCount);
+            String msg = "Accepted: " + acceptedCount
+                    + "\nBlocked (workload/deleted): " + blockedCount
+                    + "\nNo permission: " + unauthorizedCount;
+            if (alreadyProcessedCount > 0) {
+                msg += "\nAlready processed (non-pending): " + alreadyProcessedCount;
+            }
+            showAlert(Alert.AlertType.INFORMATION, "Batch Result", msg);
         }
     }
 
@@ -357,6 +436,7 @@ public class ScreeningController {
         boolean updated = false;
         int unauthorizedCount = 0;
         int deletedCount = 0;
+        int alreadyProcessedCount = 0;
         for (Application app : selected) {
             if ("PENDING".equals(app.getStatus())) {
                 if (isDeletedApplicant(app)) {
@@ -370,13 +450,19 @@ public class ScreeningController {
                 applicationService.updateApplicationStatus(app.getId(), "REJECTED");
                 app.setStatus("REJECTED");
                 updated = true;
+            } else {
+                alreadyProcessedCount++;
             }
         }
-        if (updated || unauthorizedCount > 0) {
+        if (updated || unauthorizedCount > 0 || alreadyProcessedCount > 0) {
             loadApplications();
             applicationTable.refresh();
-            showAlert(Alert.AlertType.INFORMATION, "Batch Result",
-                    "Batch reject completed.\nNo permission: " + unauthorizedCount + "\nDeleted account skipped: " + deletedCount);
+            String msg = "Batch reject completed.\nNo permission: " + unauthorizedCount
+                    + "\nDeleted account skipped: " + deletedCount;
+            if (alreadyProcessedCount > 0) {
+                msg += "\nAlready processed (non-pending): " + alreadyProcessedCount;
+            }
+            showAlert(Alert.AlertType.INFORMATION, "Batch Result", msg);
         }
     }
 
@@ -398,9 +484,9 @@ public class ScreeningController {
             if (app.equals(applicationTable.getSelectionModel().getSelectedItem())) {
                 updateDetailDrawer(app);
             }
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Application " + newStatus.toLowerCase() + ".");
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Application for " + resolveApplicantFullName(app.getApplicantUsername()) + " " + newStatus.toLowerCase() + ".");
         } else {
-            showAlert(Alert.AlertType.ERROR, "Error", "Failed to update status. Applicant may have reached workload limit.");
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to update status. Applicant " + resolveApplicantFullName(app.getApplicantUsername()) + " may have reached workload limit.");
         }
     }
 
@@ -428,6 +514,14 @@ public class ScreeningController {
             return job.getTitle();
         }
         return "Unknown Job";
+    }
+
+    private String resolveApplicantFullName(String username) {
+        User user = userMap.get(username);
+        if (user != null && user.getFullName() != null && !user.getFullName().isBlank()) {
+            return user.getFullName();
+        }
+        return username;
     }
 
     private String resolveApplicantWorkload(String username) {
@@ -486,7 +580,7 @@ public class ScreeningController {
         return !userService.userExists(app.getApplicantUsername());
     }
 
-    private record LoadResult(ObservableList<Application> items, Map<String, Job> jobMap) {
+    private record LoadResult(ObservableList<Application> items, Map<String, Job> jobMap, Map<String, User> userMap) {
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {

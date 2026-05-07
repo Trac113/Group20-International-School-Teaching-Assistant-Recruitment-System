@@ -14,6 +14,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Controller for the job posting form.
+ * Validates input fields and creates new job postings for TEACHER or ADMIN users.
+ */
 public class JobController {
     private static final int UPPER_MAX_APPLICANTS = Job.MAX_ALLOWED_APPLICANTS;
 

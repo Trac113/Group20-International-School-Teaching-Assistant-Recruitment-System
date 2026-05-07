@@ -13,6 +13,10 @@ import javafx.scene.control.TextField;
 
 import java.io.IOException;
 
+/**
+ * Login and registration screen controller.
+ * Handles user authentication against UserService and navigates to the main view on success.
+ */
 public class LoginController {
 
     @FXML

@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Service for managing user favorite job postings: toggle favorite status and retrieve favorite jobs.
+ */
 public class FavoriteService {
     private final JsonFileDAO dao;
 
@@ -23,17 +26,19 @@ public class FavoriteService {
     }
 
     public void toggleFavorite(String username, String jobId) {
-        Favorite favorite = dao.findFavoriteByUsername(username)
-                .orElse(new Favorite(username, new ArrayList<>()));
-        List<String> jobIds = favorite.getJobIds() == null ? new ArrayList<>() : favorite.getJobIds();
-        if (jobIds.contains(jobId)) {
-            jobIds.remove(jobId);
-        } else {
-            jobIds.add(jobId);
+        synchronized (JsonFileDAO.class) {
+            Favorite favorite = dao.findFavoriteByUsername(username)
+                    .orElse(new Favorite(username, new ArrayList<>()));
+            List<String> jobIds = favorite.getJobIds() == null ? new ArrayList<>() : favorite.getJobIds();
+            if (jobIds.contains(jobId)) {
+                jobIds.remove(jobId);
+            } else {
+                jobIds.add(jobId);
+            }
+            favorite.setUsername(username);
+            favorite.setJobIds(jobIds);
+            dao.saveOrUpdateFavorite(favorite);
         }
-        favorite.setUsername(username);
-        favorite.setJobIds(jobIds);
-        dao.saveOrUpdateFavorite(favorite);
     }
 
     public List<Job> getFavoriteJobs(String username) {

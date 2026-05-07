@@ -3,6 +3,10 @@ package com.qq.recruitment.model;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+ * Stores an applicant's profile information including skills, bio, and workload tracking.
+ * Workload is capped at MAX_ALLOWED_MAX_WORKLOAD (5) to prevent over-assignment.
+ */
 public class UserProfile {
     public static final int DEFAULT_MAX_WORKLOAD = 3;
     public static final int MAX_ALLOWED_MAX_WORKLOAD = 5;

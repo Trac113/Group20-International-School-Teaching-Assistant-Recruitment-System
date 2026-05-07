@@ -4,9 +4,11 @@ import com.qq.recruitment.model.Job;
 import com.qq.recruitment.model.User;
 import com.qq.recruitment.service.JobService;
 import com.qq.recruitment.util.SessionManager;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -24,6 +26,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Teacher-facing controller for managing their own posted jobs.
+ * Displays job listings with status toggle (open/close) buttons.
+ */
 public class MyJobsController {
 
     @FXML
@@ -47,16 +53,20 @@ public class MyJobsController {
         titleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTitle()));
         categoryColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
         statusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
+        actionColumn.setStyle("-fx-alignment: CENTER;");
 
         actionColumn.setCellFactory(param -> new TableCell<>() {
             private final Button toggleBtn = new Button();
             private final Button editBtn = new Button("Edit");
 
             {
+                editBtn.getStyleClass().add("table-action-muted");
                 toggleBtn.setOnAction(event -> {
                     Job job = getTableView().getItems().get(getIndex());
                     String newStatus = "OPEN".equals(job.getStatus()) ? "CLOSED" : "OPEN";
                     jobService.updateJobStatus(job.getId(), newStatus);
+                    job.setStatus(newStatus);
+                    jobTable.refresh();
                     loadMyJobs();
                 });
 
@@ -75,12 +85,19 @@ public class MyJobsController {
                     Job job = getTableView().getItems().get(getIndex());
                     if ("OPEN".equals(job.getStatus())) {
                         toggleBtn.setText("Close");
-                        toggleBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
+                        toggleBtn.getStyleClass().remove("table-action-primary");
+                        if (!toggleBtn.getStyleClass().contains("table-action-danger")) {
+                            toggleBtn.getStyleClass().add("table-action-danger");
+                        }
                     } else {
                         toggleBtn.setText("Open");
-                        toggleBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+                        toggleBtn.getStyleClass().remove("table-action-danger");
+                        if (!toggleBtn.getStyleClass().contains("table-action-primary")) {
+                            toggleBtn.getStyleClass().add("table-action-primary");
+                        }
                     }
                     HBox pane = new HBox(6, editBtn, toggleBtn);
+                    pane.setFillHeight(false);
                     setGraphic(pane);
                 }
             }
@@ -91,7 +108,7 @@ public class MyJobsController {
 
     private void handleEditJob(Job job) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Edit Job Detail");
+        dialog.setTitle("Edit Job Details");
         dialog.setHeaderText("Edit job: " + job.getTitle());
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -136,12 +153,23 @@ public class MyJobsController {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         if (currentUser == null) return;
 
-        List<Job> myJobs = jobService.getAllJobs().stream()
-                .filter(job -> currentUser.getUsername().equals(job.getPostedBy()))
-                .collect(Collectors.toList());
-
-        ObservableList<Job> jobs = FXCollections.observableArrayList(myJobs);
-        jobTable.setItems(jobs);
+        Task<List<Job>> task = new Task<>() {
+            @Override
+            protected List<Job> call() {
+                return jobService.getAllJobs().stream()
+                        .filter(job -> currentUser.getUsername().equals(job.getPostedBy()))
+                        .collect(Collectors.toList());
+            }
+        };
+        task.setOnSucceeded(event -> Platform.runLater(
+                () -> jobTable.setItems(FXCollections.observableArrayList(task.getValue()))
+        ));
+        task.setOnFailed(event -> Platform.runLater(
+                () -> jobTable.setItems(FXCollections.observableArrayList())
+        ));
+        Thread thread = new Thread(task, "my-jobs-loader");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {

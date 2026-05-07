@@ -13,16 +13,25 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Admin management controller for managing user accounts and job postings.
+ * Provides user password reset, deletion (non-ADMIN), workload configuration for applicants,
+ * and job status toggle (open/close) capabilities.
+ */
 public class AdminManagementController {
     private static final int MAX_ADMIN_SETTABLE_WORKLOAD = 5;
 
@@ -67,13 +76,43 @@ public class AdminManagementController {
         usernameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getUsername()));
         fullNameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getFullName()));
         roleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRole()));
+        userActionColumn.setStyle("-fx-alignment: CENTER;");
 
         userActionColumn.setCellFactory(param -> new TableCell<>() {
             private final Button passwordBtn = new Button("Reset Password");
+            private final Button fullNameBtn = new Button("Edit Name");
             private final Button workloadBtn = new Button("Set Workload");
-            private final HBox pane = new HBox(6, passwordBtn, workloadBtn);
+            private final HBox pane = new HBox(6, passwordBtn, fullNameBtn, workloadBtn);
 
             {
+                pane.setFillHeight(false);
+                passwordBtn.getStyleClass().add("table-action-warning");
+                fullNameBtn.getStyleClass().add("table-action-muted");
+                workloadBtn.getStyleClass().add("table-action-primary");
+
+                fullNameBtn.setOnAction(event -> {
+                    User user = getTableView().getItems().get(getIndex());
+                    TextInputDialog dialog = new TextInputDialog(user.getFullName());
+                    dialog.setTitle("Edit Full Name");
+                    dialog.setHeaderText("Edit full name for user: " + user.getUsername());
+                    dialog.setContentText("Full Name:");
+                    Optional<String> result = dialog.showAndWait();
+                    if (result.isEmpty()) {
+                        return;
+                    }
+                    String newName = result.get().trim();
+                    if (newName.isBlank()) {
+                        showAlert(Alert.AlertType.WARNING, "Warning", "Full name cannot be empty.");
+                        return;
+                    }
+                    if (userService.updateFullName(user.getUsername(), newName)) {
+                        showAlert(Alert.AlertType.INFORMATION, "Success", "Full name updated.");
+                        loadUsersAsync();
+                    } else {
+                        showAlert(Alert.AlertType.ERROR, "Error", "Failed to update full name.");
+                    }
+                });
+
                 passwordBtn.setOnAction(event -> {
                     User user = getTableView().getItems().get(getIndex());
                     TextInputDialog dialog = new TextInputDialog();
@@ -110,7 +149,7 @@ public class AdminManagementController {
                     TextInputDialog dialog = new TextInputDialog(String.valueOf(current));
                     dialog.setTitle("Set Max Workload");
                     dialog.setHeaderText("Set max workload for: " + user.getUsername());
-                    dialog.setContentText("Max Workload (0-" + MAX_ADMIN_SETTABLE_WORKLOAD + "):");
+                    dialog.setContentText("Max Workload (1-" + MAX_ADMIN_SETTABLE_WORKLOAD + "):");
                     Optional<String> result = dialog.showAndWait();
                     if (result.isEmpty()) {
                         return;
@@ -123,8 +162,8 @@ public class AdminManagementController {
                         showAlert(Alert.AlertType.WARNING, "Warning", "Workload must be an integer.");
                         return;
                     }
-                    if (target < 0) {
-                        showAlert(Alert.AlertType.WARNING, "Warning", "Workload cannot be negative.");
+                    if (target < 1) {
+                        showAlert(Alert.AlertType.WARNING, "Warning", "Workload must be at least 1.");
                         return;
                     }
                     if (target > MAX_ADMIN_SETTABLE_WORKLOAD) {
@@ -154,18 +193,33 @@ public class AdminManagementController {
     private void bindJobColumns() {
         jobIdColumn.setCellValueFactory(data -> new SimpleStringProperty(JobService.toDisplayJobId(data.getValue().getId())));
         jobTitleColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTitle()));
-        jobPostedByColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getPostedBy()));
+        jobPostedByColumn.setCellValueFactory(data -> {
+            String username = data.getValue().getPostedBy();
+            Optional<User> userOpt = userService.findUserByUsername(username);
+            String displayName = userOpt.map(User::getFullName).orElse(username);
+            return new SimpleStringProperty(displayName);
+        });
         jobStatusColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
+        jobActionColumn.setStyle("-fx-alignment: CENTER;");
 
         jobActionColumn.setCellFactory(param -> new TableCell<>() {
             private final Button toggleBtn = new Button();
+            private final Button editBtn = new Button("Edit");
 
             {
+                editBtn.getStyleClass().add("table-action-muted");
                 toggleBtn.setOnAction(event -> {
                     Job job = getTableView().getItems().get(getIndex());
                     String newStatus = "OPEN".equals(job.getStatus()) ? "CLOSED" : "OPEN";
                     jobService.updateJobStatus(job.getId(), newStatus);
+                    job.setStatus(newStatus);
+                    jobTable.refresh();
                     loadJobsAsync();
+                });
+
+                editBtn.setOnAction(event -> {
+                    Job job = getTableView().getItems().get(getIndex());
+                    handleEditJob(job);
                 });
             }
 
@@ -178,10 +232,20 @@ public class AdminManagementController {
                     Job job = getTableView().getItems().get(getIndex());
                     if ("OPEN".equals(job.getStatus())) {
                         toggleBtn.setText("Take Down");
+                        toggleBtn.getStyleClass().remove("table-action-primary");
+                        if (!toggleBtn.getStyleClass().contains("table-action-danger")) {
+                            toggleBtn.getStyleClass().add("table-action-danger");
+                        }
                     } else {
                         toggleBtn.setText("Reopen");
+                        toggleBtn.getStyleClass().remove("table-action-danger");
+                        if (!toggleBtn.getStyleClass().contains("table-action-primary")) {
+                            toggleBtn.getStyleClass().add("table-action-primary");
+                        }
                     }
-                    setGraphic(toggleBtn);
+                    HBox pane = new HBox(6, editBtn, toggleBtn);
+                    pane.setFillHeight(false);
+                    setGraphic(pane);
                 }
             }
         });
@@ -221,6 +285,49 @@ public class AdminManagementController {
         Thread thread = new Thread(task, "admin-job-loader");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void handleEditJob(Job job) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Job Detail");
+        dialog.setHeaderText("Edit job: " + job.getTitle());
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        TextArea descArea = new TextArea(job.getDescription());
+        descArea.setPrefRowCount(5);
+        TextArea reqArea = new TextArea(job.getRequirements());
+        reqArea.setPrefRowCount(5);
+
+        grid.add(new Label("Description:"), 0, 0);
+        grid.add(descArea, 1, 0);
+        grid.add(new Label("Requirements:"), 0, 1);
+        grid.add(reqArea, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) {
+            return;
+        }
+
+        String newDesc = descArea.getText().trim();
+        String newReq = reqArea.getText().trim();
+
+        if (newDesc.isBlank() || newReq.isBlank()) {
+            showAlert(Alert.AlertType.WARNING, "Warning", "Description and requirements cannot be empty.");
+            return;
+        }
+
+        if (jobService.updateJobDetails(job.getId(), newDesc, newReq)) {
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Job details updated.");
+            loadJobsAsync();
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to update job details.");
+        }
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {
