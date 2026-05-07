@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"com.qq.recruitment"},{"l":"com.qq.recruitment.controller"},{"l":"com.qq.recruitment.dao"},{"l":"com.qq.recruitment.model"},{"l":"com.qq.recruitment.service"},{"l":"com.qq.recruitment.util"},{"l":"所有程序包","u":"allpackages-index.html"}];updateSearchResults();
