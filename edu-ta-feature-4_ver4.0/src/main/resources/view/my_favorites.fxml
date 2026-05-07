@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="10" styleClass="responsive-page" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.qq.recruitment.controller.MyFavoritesController">
+    <stylesheets>
+        <URL value="@styles.css"/>
+    </stylesheets>
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20"/>
+    </padding>
+
+    <Label text="My Favorite Jobs" styleClass="page-title"/>
+
+    <TableView fx:id="favoriteTable" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="jobIdColumn" text="Job ID" prefWidth="100"/>
+            <TableColumn fx:id="titleColumn" text="Title" prefWidth="180"/>
+            <TableColumn fx:id="categoryColumn" text="Category" prefWidth="130"/>
+            <TableColumn fx:id="statusColumn" text="Status" prefWidth="100"/>
+            <TableColumn fx:id="postedByColumn" text="Posted By" prefWidth="150"/>
+        </columns>
+    </TableView>
+</VBox>
