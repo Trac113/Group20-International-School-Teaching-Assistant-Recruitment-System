@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="14" styleClass="responsive-page" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.qq.recruitment.controller.AdminManagementController">
+    <stylesheets>
+        <URL value="@styles.css"/>
+    </stylesheets>
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20"/>
+    </padding>
+
+    <Label text="Admin Management" styleClass="page-title"/>
+
+    <GridPane hgap="16" vgap="16" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="50.0" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="50.0" hgrow="ALWAYS"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints vgrow="ALWAYS"/>
+        </rowConstraints>
+
+        <VBox spacing="8" maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS">
+            <Label text="User Management" styleClass="panel-section-title"/>
+            <TableView fx:id="userTable" styleClass="panel-blue" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="usernameColumn" text="Username" prefWidth="120"/>
+                    <TableColumn fx:id="fullNameColumn" text="Full Name" prefWidth="140"/>
+                    <TableColumn fx:id="roleColumn" text="Role" prefWidth="110"/>
+                    <TableColumn fx:id="userActionColumn" text="Actions" minWidth="320" prefWidth="340"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <VBox spacing="8" maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.vgrow="ALWAYS">
+            <Label text="Job Management" styleClass="panel-section-title"/>
+            <TableView fx:id="jobTable" styleClass="panel-green" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="jobIdColumn" text="Job ID" prefWidth="110"/>
+                    <TableColumn fx:id="jobTitleColumn" text="Job Title" prefWidth="220"/>
+                    <TableColumn fx:id="jobPostedByColumn" text="Posted By" prefWidth="120"/>
+                    <TableColumn fx:id="jobStatusColumn" text="Status" prefWidth="90"/>
+                    <TableColumn fx:id="jobActionColumn" text="Actions" minWidth="160" prefWidth="180"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </GridPane>
+</VBox>

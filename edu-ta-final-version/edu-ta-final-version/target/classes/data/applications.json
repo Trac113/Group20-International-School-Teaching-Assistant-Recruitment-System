@@ -1,0 +1,52 @@
+[
+  {
+    "id": "app-001",
+    "jobId": "job-001",
+    "applicantUsername": "student",
+    "status": "PENDING",
+    "resumePath": "src/main/resources/data/resumes/student_java_resume.pdf",
+    "appliedAt": "2026-04-20T09:15:00",
+    "matchScore": 88,
+    "aiAnalysis": "Strong Java and OOP background. The applicant's skills match the core course requirements and the workload is still available."
+  },
+  {
+    "id": "app-002",
+    "jobId": "job-002",
+    "applicantUsername": "student",
+    "status": "ACCEPTED",
+    "resumePath": "src/main/resources/data/resumes/student_python_resume.pdf",
+    "appliedAt": "2026-04-18T14:20:00",
+    "matchScore": 82,
+    "aiAnalysis": "Good Python foundation and useful data analysis experience. Recommended for course support."
+  },
+  {
+    "id": "app-003",
+    "jobId": "job-003",
+    "applicantUsername": "student2",
+    "status": "PENDING",
+    "resumePath": "src/main/resources/data/resumes/student2_english_resume.pdf",
+    "appliedAt": "2026-04-21T10:30:00",
+    "matchScore": 91,
+    "aiAnalysis": "Excellent communication and presentation experience. Highly suitable for conversation lab facilitation."
+  },
+  {
+    "id": "app-004",
+    "jobId": "job-004",
+    "applicantUsername": "student3",
+    "status": "PENDING",
+    "resumePath": "src/main/resources/data/resumes/student3_robotics_resume.pdf",
+    "appliedAt": "2026-04-22T16:05:00",
+    "matchScore": 76,
+    "aiAnalysis": "Has teamwork and project experience. Robotics skills are adequate but may need teacher guidance for advanced hardware tasks."
+  },
+  {
+    "id": "app-005",
+    "jobId": "job-001",
+    "applicantUsername": "student3",
+    "status": "REJECTED",
+    "resumePath": "src/main/resources/data/resumes/student3_java_resume.pdf",
+    "appliedAt": "2026-04-16T11:00:00",
+    "matchScore": 54,
+    "aiAnalysis": "Limited Java experience compared with the course requirements. Consider another support role first."
+  }
+]

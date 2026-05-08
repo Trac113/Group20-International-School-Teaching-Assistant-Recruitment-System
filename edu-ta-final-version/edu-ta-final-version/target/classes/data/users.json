@@ -1,0 +1,38 @@
+[
+  {
+    "username": "admin",
+    "password": "admin",
+    "fullName": "System Admin",
+    "role": "ADMIN"
+  },
+  {
+    "username": "teacher",
+    "password": "teacher",
+    "fullName": "Alice Chen",
+    "role": "TEACHER"
+  },
+  {
+    "username": "teacher2",
+    "password": "teacher2",
+    "fullName": "Brian Smith",
+    "role": "TEACHER"
+  },
+  {
+    "username": "student",
+    "password": "student",
+    "fullName": "Li Ming",
+    "role": "APPLICANT"
+  },
+  {
+    "username": "student2",
+    "password": "student2",
+    "fullName": "Wang Yue",
+    "role": "APPLICANT"
+  },
+  {
+    "username": "student3",
+    "password": "student3",
+    "fullName": "Chen Yu",
+    "role": "APPLICANT"
+  }
+]
